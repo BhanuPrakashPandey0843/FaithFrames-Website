@@ -17,5 +17,5 @@ src/app/
   https://www.behance.net/gallery/227797357/Rauva-Landing-Page-Redesign?tracking_source=search_projects|fintech+product+design+website&l=11
 
   git add . 
-  git commit -m "added the sign in and sign up page  did little improivement on the compoennet  other compoennets component"
+  git commit -m "added the sign in and sign up page  did little improivement on the compoennet  other compoenets"
   git push origin main 

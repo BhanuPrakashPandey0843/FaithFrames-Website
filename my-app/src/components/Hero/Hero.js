@@ -54,7 +54,7 @@ export default function Home() {
           transition={{ delay: 0.4, duration: 0.8 }}
           viewport={{ once: true }}
         >
-          Faith Frames brings you <span className="font-semibold text-gray-800">divine wallpapers & uplifting quotes</span>  
+          Faith Frames brings you <span className="font-semibold text-gray-800">divine wallpapers & uplifting quotes </span>  
           that fill your screen with peace, hope, and motivation.  
           Let every glance at your device be a moment of inspiration.
         </motion.p>

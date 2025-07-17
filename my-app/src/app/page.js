@@ -1,7 +1,7 @@
 import Navbar from "../components/Navbar/Navbar";
+
 import Hero from "../components/Hero/Hero";
 import About from "../components/About/About";
-import SecuritySection from "../components/SecuritySection/SecuritySection"
 import FaqSection from "../components/FaqSection/FaqSection";
 import Description from "../components/Description/Description";
 import Newsletter from "../components/Newsletter/Newsletter";
@@ -13,7 +13,6 @@ export default function Page() {
       <Navbar />
       <Hero />
       <About />
-      <SecuritySection/>
       <Description />
       <FaqSection />
       <Testimonial />

@@ -71,7 +71,7 @@ export default function Navbar() {
             href="/login"
             className="relative px-6 py-2 rounded-md border border-gray-300 text-gray-800 font-medium overflow-hidden group transition hover:border-black hover:scale-[1.03]"
           >
-            <span className="relative z-10">Log in</span>
+            <span className="relative z-10">Sign In</span>
             {/* Shine animation */}
             <span className="absolute top-0 left-[-50%] w-[50%] h-full bg-gradient-to-r from-transparent via-white/40 to-transparent transform rotate-12 group-hover:left-[120%] transition-all duration-700 ease-out"></span>
           </Link>
@@ -152,7 +152,7 @@ export default function Navbar() {
                 className="relative px-6 py-3 rounded-md border border-gray-300 text-gray-800 text-center overflow-hidden group hover:border-black"
                 onClick={() => setIsOpen(false)}
               >
-                <span className="relative z-10">Log in</span>
+                <span className="relative z-10">Sign in</span>
                 <span className="absolute top-0 left-[-50%] w-[50%] h-full bg-gradient-to-r from-transparent via-white/40 to-transparent rotate-12 group-hover:left-[120%] transition-all duration-700 ease-out"></span>
               </Link>
 

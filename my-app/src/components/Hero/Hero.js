@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+ import { motion } from "framer-motion";
 import Image from "next/image";
 import { Users } from "lucide-react";
 import Middlephone from "../Hero/MiddlePhone.png";

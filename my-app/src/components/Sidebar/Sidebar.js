@@ -2,8 +2,9 @@
 import { motion } from "framer-motion";
 import {
   LayoutDashboard,
-  Mail,
-  MessageSquare,
+  Image as WallpaperIcon,
+  FileQuestion,
+  Quote,
   Bell,
   ClipboardList,
   Users,
@@ -20,17 +21,18 @@ export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
-  const menuItems = [
-    { name: "Dashboard", icon: LayoutDashboard, path: "/admin" },
-    { name: "Inbox", icon: Mail, path: "/admin/inbox", badge: "New" },
-    { name: "Messages", icon: MessageSquare, path: "/admin/messages" },
-    { name: "Notifications", icon: Bell, path: "/admin/notifications", badge: "1.2k" },
-    { name: "Tasks", icon: ClipboardList, path: "/admin/tasks" },
-    { name: "Clients", icon: Users, path: "/admin/clients", badge: "15" },
-    { name: "Profile", icon: User, path: "/admin/profile" },
-    { name: "Settings", icon: Settings, path: "/admin/settings" },
-    { name: "Logout", icon: LogOut, path: "/logout" },
-  ];
+const menuItems = [
+  { name: "Dashboard", icon: LayoutDashboard, path: "/admin" },
+  { name: "Upload Wallpaper", icon: WallpaperIcon, path: "/admin/uploads/upload-wallpaper" },
+  { name: "Upload Quote", icon: Quote, path: "/admin/uploads/upload-quote" },
+  { name: "Upload Quiz Question", icon: FileQuestion, path: "/admin/uploads/upload-quiz" }, // ✅ fixed
+  { name: "Tasks", icon: ClipboardList, path: "/admin/tasks" },
+  { name: "Clients", icon: Users, path: "/admin/clients", badge: "15" },
+  { name: "Profile", icon: User, path: "/admin/profile" },
+  { name: "Settings", icon: Settings, path: "/admin/settings" },
+  { name: "Logout", icon: LogOut, path: "/logout" },
+];
+
 
   // Detect mobile screen size
   useEffect(() => {

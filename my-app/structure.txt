@@ -1,0 +1,94 @@
+Folder PATH listing
+Volume serial number is 8A4D-5FA0
+E:.
+³   .gitignore
+³   eslint.config.mjs
+³   jsconfig.json
+³   netlify.toml
+³   next.config.mjs
+³   package-lock.json
+³   package.json
+³   postcss.config.mjs
+³   README.md
+³   structure.txt
+³   
+ÃÄÄÄpublic
+³       file.svg
+³       globe.svg
+³       next.svg
+³       vercel.svg
+³       window.svg
+³       
+ÀÄÄÄsrc
+    ÃÄÄÄapp
+    ³   ³   favicon.ico
+    ³   ³   globals.css
+    ³   ³   layout.js
+    ³   ³   page.js
+    ³   ³   
+    ³   ÃÄÄÄadmin
+    ³   ³   ³   page.js
+    ³   ³   ³   
+    ³   ³   ÀÄÄÄuploads
+    ³   ³       ÃÄÄÄupload-quiz
+    ³   ³       ³       page.js
+    ³   ³       ³       
+    ³   ³       ÀÄÄÄupload-wallpaper
+    ³   ³               page.js
+    ³   ³               
+    ³   ÃÄÄÄcontact
+    ³   ³       page.js
+    ³   ³       
+    ³   ÃÄÄÄlogin
+    ³   ³       page.js
+    ³   ³       
+    ³   ÃÄÄÄlogout
+    ³   ³       page.js
+    ³   ³       
+    ³   ÀÄÄÄsignup
+    ³           page.js
+    ³           
+    ÀÄÄÄcomponents
+        ÃÄÄÄAbout
+        ³       About.js
+        ³       
+        ÃÄÄÄDashboard
+        ³       Dashboard.js
+        ³       
+        ÃÄÄÄDescription
+        ³       Description.js
+        ³       
+        ÃÄÄÄFaqSection
+        ³       FaqSection.js
+        ³       
+        ÃÄÄÄFooter
+        ³       Footer.js
+        ³       
+        ÃÄÄÄHero
+        ³       Faith.png
+        ³       Hero.js
+        ³       MiddlePhone.png
+        ³       
+        ÃÄÄÄNavbar
+        ³       Navbar.js
+        ³       
+        ÃÄÄÄNewsletter
+        ³       lockbg.png
+        ³       Newsletter.js
+        ³       newsletterbg.png
+        ³       
+        ÃÄÄÄSidebar
+        ³       Sidebar.js
+        ³       
+        ÃÄÄÄSignin
+        ³       Signin.js
+        ³       
+        ÃÄÄÄSignup
+        ³       Signup.js
+        ³       
+        ÃÄÄÄTestimonial
+        ³       Testimonial.js
+        ³       
+        ÀÄÄÄui
+                card.js
+                

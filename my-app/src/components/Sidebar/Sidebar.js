@@ -7,22 +7,24 @@ import {
   FileQuestion,
   Quote,
   ClipboardList,
-  Users,
-  Settings,
   LogOut,
   User,
   ChevronLeft,
   ChevronRight,
-  MessageCircle, // ✅ new icon for Witness
+  MessageCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation"; // ✅ router for redirect
+import { getAuth, signOut } from "firebase/auth"; // ✅ firebase auth
+import { app } from "../../firebase"; // adjust path if needed
 
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  const auth = getAuth(app);
 
   const menuItems = [
     { name: "Dashboard", icon: LayoutDashboard, path: "/admin" },
@@ -31,12 +33,20 @@ export default function Sidebar() {
     { name: "Upload Quiz Question", icon: FileQuestion, path: "/admin/uploads/upload-quiz" },
     { name: "Upload Daily Verse", icon: ClipboardList, path: "/admin/uploads/upload-verse" },
     { name: "Upload Daily Prayers", icon: ClipboardList, path: "/admin/uploads/upload-prayers" },
-    { name: "Upload Witness", icon: MessageCircle, path: "/admin/uploads/upload-witness" }, // ✅ fixed
-    { name: "Clients", icon: Users, path: "/admin/clients", badge: "15" },
-    { name: "Profile", icon: User, path: "/admin/profile" },
-    { name: "Settings", icon: Settings, path: "/admin/settings" },
-    { name: "Logout", icon: LogOut, path: "/logout" },
+    { name: "Upload Witness", icon: MessageCircle, path: "/admin/uploads/upload-witness" },
+    { name: "Profile", icon: User, path: "/admin/uploads/profile" },
+    { name: "Logout", icon: LogOut, action: "logout" }, // ✅ logout action instead of path
   ];
+
+  // ✅ Handle logout
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.push("/"); // ✅ redirect to landing page
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   // Detect mobile screen size
   useEffect(() => {
@@ -70,7 +80,6 @@ export default function Sidebar() {
               Faith Admin
             </motion.h2>
           )}
-          {/* Toggle Button */}
           <button
             onClick={() => setIsOpen(!isOpen)}
             className="p-2 rounded-lg hover:bg-gray-100 transition"
@@ -105,30 +114,39 @@ export default function Sidebar() {
                 whileHover={{ scale: 1.03, x: 5 }}
                 transition={{ type: "spring", stiffness: 200 }}
               >
-                <Link
-                  href={item.path}
-                  className={`flex items-center gap-3 p-3 rounded-xl transition-all relative group ${
-                    isActive
-                      ? "bg-[#C9DAFF] text-[#558AFF] font-semibold"
-                      : "hover:bg-blue-50 hover:text-[#558AFF]"
-                  }`}
-                >
-                  <item.icon
-                    className={`w-5 h-5 ${
-                      isOpen ? "text-gray-600 group-hover:text-[#558AFF]" : "mx-auto"
-                    } transition-all`}
-                  />
-                  {isOpen && (
-                    <span className="text-sm font-medium tracking-wide">
-                      {item.name}
-                    </span>
-                  )}
-                  {item.badge && isOpen && (
-                    <span className="ml-auto px-2 py-0.5 text-xs font-semibold bg-[#C9DAFF] text-[#333333] rounded-full">
-                      {item.badge}
-                    </span>
-                  )}
-                </Link>
+                {item.action === "logout" ? (
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl transition-all relative group hover:bg-red-50 hover:text-red-500 text-left"
+                  >
+                    <item.icon className="w-5 h-5 text-gray-600 group-hover:text-red-500" />
+                    {isOpen && (
+                      <span className="text-sm font-medium tracking-wide">
+                        {item.name}
+                      </span>
+                    )}
+                  </button>
+                ) : (
+                  <Link
+                    href={item.path}
+                    className={`flex items-center gap-3 p-3 rounded-xl transition-all relative group ${
+                      isActive
+                        ? "bg-[#C9DAFF] text-[#558AFF] font-semibold"
+                        : "hover:bg-blue-50 hover:text-[#558AFF]"
+                    }`}
+                  >
+                    <item.icon
+                      className={`w-5 h-5 ${
+                        isOpen ? "text-gray-600 group-hover:text-[#558AFF]" : "mx-auto"
+                      } transition-all`}
+                    />
+                    {isOpen && (
+                      <span className="text-sm font-medium tracking-wide">
+                        {item.name}
+                      </span>
+                    )}
+                  </Link>
+                )}
               </motion.li>
             );
           })}

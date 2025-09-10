@@ -2,7 +2,7 @@
 "use client";
 import React from 'react'
 import Sidebar from "../../../../components/Sidebar/Sidebar"
-import UploadWallpaper from "../../../../components/UploadWallpaper/UploadWallpaper"
+import UploadWallpaper from "../../../../components/UploadWitness/UploadWitness"
 
 
 export default function AdminPage() {

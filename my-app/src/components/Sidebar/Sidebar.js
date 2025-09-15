@@ -1,6 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { BookOpen } from "lucide-react";
+
+
 import {
   LayoutDashboard,
   Image as WallpaperIcon,
@@ -34,6 +37,7 @@ export default function Sidebar() {
     { name: "Upload Daily Verse", icon: ClipboardList, path: "/admin/uploads/upload-verse" },
     { name: "Upload Daily Prayers", icon: ClipboardList, path: "/admin/uploads/upload-prayers" },
     { name: "Upload Witness", icon: MessageCircle, path: "/admin/uploads/upload-witness" },
+    { name: "Upload Gods-Words", icon: BookOpen, path: "/admin/uploads/upload-godswords" },
     { name: "Profile", icon: User, path: "/admin/uploads/profile" },
     { name: "Logout", icon: LogOut, action: "logout" }, // ✅ logout action instead of path
   ];

@@ -187,3 +187,5 @@ const UploadWallpaper = () => {
 };
 
 export default UploadWallpaper;
+
+

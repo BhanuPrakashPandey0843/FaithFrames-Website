@@ -38,6 +38,8 @@ export default function Sidebar() {
     { name: "Upload Daily Prayers", icon: ClipboardList, path: "/admin/uploads/upload-prayers" },
     { name: "Upload Witness", icon: MessageCircle, path: "/admin/uploads/upload-witness" },
     { name: "Upload Gods-Words", icon: BookOpen, path: "/admin/uploads/upload-godswords" },
+{ name: "Upload Meet-Share", icon: MessageCircle, path: "/admin/uploads/upload-meetShare" },
+
     { name: "Profile", icon: User, path: "/admin/uploads/profile" },
     { name: "Logout", icon: LogOut, action: "logout" }, // ✅ logout action instead of path
   ];

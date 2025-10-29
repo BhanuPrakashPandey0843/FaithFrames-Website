@@ -41,9 +41,9 @@ const Newsletter = () => {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.6 }}
         >
-          Join{" "}
-          <span className="font-semibold text-white"> thousands </span> 
-         who find daily inspiration with our curated collection of sacred wallpapers, quotes, and blessings.
+          Experience {" "}
+          <span className="font-semibold text-white"> daily </span> 
+         encouragement through beautiful Bible verse wallpapers designed to strengthen your faith and fill your day with peace.
         </motion.p>
 
         {/* ✅ Compact Button */}

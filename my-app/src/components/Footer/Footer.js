@@ -5,6 +5,8 @@ import {
   Twitter,
   Linkedin,
   Instagram,
+  Youtube,
+  Mail,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -25,6 +27,7 @@ const Footer = () => {
         />
       </div>
 
+      {/* Content */}
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-12 py-16">
         <div className="flex flex-col lg:flex-row justify-between gap-14 lg:gap-20">
           {/* Brand Section */}
@@ -43,8 +46,10 @@ const Footer = () => {
               </h1>
             </a>
             <p className="text-gray-300 text-base leading-relaxed">
-              Create sleek, customizable short links with real-time analytics,
-              click tracking, and branded domains.
+              Fill your screen with Bible verse wallpapers that remind you of
+              God’s love, peace, and promises every day. <br />
+              One lifetime plan — ₹10 (India) | $3 (Global) — no renewals, no
+              hidden fees.
             </p>
 
             {/* Newsletter */}
@@ -70,28 +75,78 @@ const Footer = () => {
             <div>
               <h4 className="text-lg font-semibold text-white mb-5">Product</h4>
               <ul className="space-y-3 text-sm">
-                <li><a href="#" className="text-gray-400 hover:text-white">Dashboard</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white">Shorten URL</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white">Link History</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white">Analytics</a></li>
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-white">
+                    Dashboard
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-white">
+                    Shorten URL
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-white">
+                    Link History
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-white">
+                    Analytics
+                  </a>
+                </li>
               </ul>
             </div>
+
             <div>
               <h4 className="text-lg font-semibold text-white mb-5">Company</h4>
               <ul className="space-y-3 text-sm">
-                <li><a href="#" className="text-gray-400 hover:text-white">About</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white">Careers</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white">Blog</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white">Support</a></li>
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-white">
+                    About
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-white">
+                    Careers
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-white">
+                    Blog
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-white">
+                    Support
+                  </a>
+                </li>
               </ul>
             </div>
+
             <div>
               <h4 className="text-lg font-semibold text-white mb-5">Legal</h4>
               <ul className="space-y-3 text-sm">
-                <li><a href="#" className="text-gray-400 hover:text-white">Privacy Policy</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white">Terms</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white">Security</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white">GDPR</a></li>
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-white">
+                    Privacy Policy
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-white">
+                    Terms
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-white">
+                    Security
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-white">
+                    GDPR
+                  </a>
+                </li>
               </ul>
             </div>
           </motion.div>
@@ -99,23 +154,43 @@ const Footer = () => {
 
         {/* Bottom Row */}
         <div className="mt-12 pt-6 border-t border-gray-800 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <span className="text-sm text-gray-400">
+          <span className="text-sm text-gray-400 text-center sm:text-left">
             © {new Date().getFullYear()}{" "}
-            <span className="text-white font-medium">Faith Frames</span>. All rights reserved.
+            <span className="text-white font-medium">Faith Frames</span>. All
+            rights reserved.
           </span>
 
+          {/* Social Icons */}
           <div className="flex space-x-5">
-            <a href="#" className="text-gray-400 hover:text-white hover:scale-110 transition-transform">
+            <a
+              href="https://www.facebook.com/share/1Bt7heQhCx/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-400 hover:text-white hover:scale-110 transition-transform"
+            >
               <Facebook size={18} />
             </a>
-            <a href="#" className="text-gray-400 hover:text-white hover:scale-110 transition-transform">
-              <Twitter size={18} />
-            </a>
-            <a href="#" className="text-gray-400 hover:text-white hover:scale-110 transition-transform">
-              <Linkedin size={18} />
-            </a>
-            <a href="#" className="text-gray-400 hover:text-white hover:scale-110 transition-transform">
+            <a
+              href="https://www.instagram.com/faithframes.in?igsh=MXZ3cHpnOGNwd2Qwaw=="
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-400 hover:text-white hover:scale-110 transition-transform"
+            >
               <Instagram size={18} />
+            </a>
+            <a
+              href="https://www.youtube.com/@FaithFramesOfficial"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-400 hover:text-white hover:scale-110 transition-transform"
+            >
+              <Youtube size={18} />
+            </a>
+            <a
+              href="mailto:support@faithframes.in"
+              className="text-gray-400 hover:text-white hover:scale-110 transition-transform"
+            >
+              <Mail size={18} />
             </a>
           </div>
         </div>
@@ -125,5 +200,3 @@ const Footer = () => {
 };
 
 export default Footer;
-
-

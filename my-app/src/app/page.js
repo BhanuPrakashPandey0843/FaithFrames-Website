@@ -1,5 +1,5 @@
 import Navbar from "../components/Navbar/Navbar";
-
+import Pricing from "../components/Pricing/Pricing";
 import Hero from "../components/Hero/Hero";
 import About from "../components/About/About";
 import FaqSection from "../components/FaqSection/FaqSection";
@@ -16,6 +16,8 @@ export default function Page() {
       <Description />
       <FaqSection />
       <Testimonial />
+       <Pricing />
+      
       <Newsletter />
       <Footer />
     </div>

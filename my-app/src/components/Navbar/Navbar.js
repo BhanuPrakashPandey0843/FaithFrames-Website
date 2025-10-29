@@ -17,8 +17,8 @@ export default function Navbar() {
 
   const navLinks = [
     { name: "Home", href: "/" },
-    { name: "About", href: "#about" },
-    { name: "Pricing", href: "#pricing" },
+    { name: "About", href: "/about" },
+    { name: "Pricing", href: "/pricing" },
     { name: "Contact", href: "/contact" },
   ];
 
@@ -171,3 +171,5 @@ export default function Navbar() {
     </motion.nav>
   );
 }
+
+

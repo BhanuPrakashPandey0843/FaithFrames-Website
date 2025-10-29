@@ -2,8 +2,6 @@
 import React from "react";
 import {
   Facebook,
-  Twitter,
-  Linkedin,
   Instagram,
   Youtube,
   Mail,
@@ -30,6 +28,7 @@ const Footer = () => {
       {/* Content */}
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-12 py-16">
         <div className="flex flex-col lg:flex-row justify-between gap-14 lg:gap-20">
+          
           {/* Brand Section */}
           <motion.div
             className="max-w-lg text-center lg:text-left"
@@ -65,89 +64,34 @@ const Footer = () => {
             </div>
           </motion.div>
 
-          {/* Footer Links */}
+          {/* Footer Links (2 rows, 3 each) */}
           <motion.div
-            className="grid grid-cols-2 sm:grid-cols-3 gap-10 text-center sm:text-left"
+            className="flex flex-col items-center justify-center text-center w-full lg:w-auto"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             transition={{ delay: 0.2, duration: 0.6 }}
           >
-            <div>
-              <h4 className="text-lg font-semibold text-white mb-5">Product</h4>
-              <ul className="space-y-3 text-sm">
-                <li>
-                  <a href="#" className="text-gray-400 hover:text-white">
-                    Dashboard
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-400 hover:text-white">
-                    Shorten URL
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-400 hover:text-white">
-                    Link History
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-400 hover:text-white">
-                    Analytics
-                  </a>
-                </li>
-              </ul>
+            <div className="grid grid-cols-3 gap-6 mb-4 text-gray-400 text-sm sm:text-base">
+              <a href="/about" className="hover:text-white transition-colors">
+                About Us
+              </a>
+              <a href="/contact" className="hover:text-white transition-colors">
+                Contact Us
+              </a>
+              <a href="/privacy-policy" className="hover:text-white transition-colors">
+                Privacy Policy
+              </a>
             </div>
-
-            <div>
-              <h4 className="text-lg font-semibold text-white mb-5">Company</h4>
-              <ul className="space-y-3 text-sm">
-                <li>
-                  <a href="#" className="text-gray-400 hover:text-white">
-                    About
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-400 hover:text-white">
-                    Careers
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-400 hover:text-white">
-                    Blog
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-400 hover:text-white">
-                    Support
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-lg font-semibold text-white mb-5">Legal</h4>
-              <ul className="space-y-3 text-sm">
-                <li>
-                  <a href="#" className="text-gray-400 hover:text-white">
-                    Privacy Policy
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-400 hover:text-white">
-                    Terms
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-400 hover:text-white">
-                    Security
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-400 hover:text-white">
-                    GDPR
-                  </a>
-                </li>
-              </ul>
+            <div className="grid grid-cols-3 gap-6 text-gray-400 text-sm sm:text-base">
+              <a href="/terms-and-conditions" className="hover:text-white transition-colors">
+                Terms & Conditions
+              </a>
+              <a href="/pricing" className="hover:text-white transition-colors">
+                Pricing
+              </a>
+              <a href="/refund-policy" className="hover:text-white transition-colors">
+                Refund Policy
+              </a>
             </div>
           </motion.div>
         </div>

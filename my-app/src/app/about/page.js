@@ -1,19 +1,21 @@
 "use client";
 
 import React from "react";
+import Abouthero from "../../components/abouthero/abouthero";
 import Navbar from "../../components/Navbar/Navbar";
 import Newsletter from "../../components/Newsletter/Newsletter";
+import About from "../../components/About/About";
 import Footer from "../../components/Footer/Footer";
-import Contacthero from "../../components/Contacthero/Contacthero";
-import Contactform from "../../components/Contactform/Contactform";
+
 const Page = () => {
   return (
     <div className="min-h-screen flex flex-col bg-black text-white">
       {/* Navbar Section */}
       <Navbar />
+      <Abouthero  />
+      <About />
 
-          <Contacthero />
-         <Contactform />
+        
         {/* Newsletter Section */}
         <Newsletter />
    

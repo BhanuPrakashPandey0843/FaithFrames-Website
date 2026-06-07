@@ -1,7 +1,8 @@
+"use client";
+
 // Force dynamic rendering to prevent pre-rendering errors
 export const dynamic = "force-dynamic";
 
-"use client";
 import React from "react";
 import Sidebar from "../../components/Sidebar/Sidebar";
 import Dashboard from "../../components/Dashboard/Dashboard";

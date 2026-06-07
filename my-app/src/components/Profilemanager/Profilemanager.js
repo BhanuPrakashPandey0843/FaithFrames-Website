@@ -1,19 +1,11 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import {
-  getFirestore,
-  collection,
-  onSnapshot,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
-  query,
-  orderBy,
-} from "firebase/firestore";
-import { app } from "../../firebase";
-
-const db = getFirestore(app);
+  fetchAdminUsers,
+  adminCreateUser,
+  adminUpdateUser,
+  adminDeleteUser,
+} from "../../lib/adminApi";
 
 const ProfileManager = () => {
   const [users, setUsers] = useState([]);
@@ -27,29 +19,26 @@ const ProfileManager = () => {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("newest");
+  const [error, setError] = useState("");
 
-  //  Realtime Fetch Users
+  const loadUsers = async () => {
+    try {
+      const result = await fetchAdminUsers();
+      setUsers(result.users || []);
+      setError("");
+    } catch (err) {
+      setError(err.message || "Failed to load users.");
+    }
+  };
+
   useEffect(() => {
-    const q =
-      sortBy === "newest"
-        ? query(collection(db, "users"), orderBy("updatedAt", "desc"))
-        : sortBy === "oldest"
-        ? query(collection(db, "users"), orderBy("updatedAt", "asc"))
-        : collection(db, "users");
+    loadUsers();
+  }, []);
 
-    const unsub = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setUsers(data);
-    });
-    return () => unsub();
-  }, [sortBy]);
-
-  //  Handle Input
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  //  Add or Update User
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name || !form.email) {
@@ -61,29 +50,22 @@ const ProfileManager = () => {
       setLoading(true);
 
       if (editingId) {
-        await updateDoc(doc(db, "users", editingId), {
-          ...form,
-          updatedAt: Date.now(),
-        });
+        await adminUpdateUser(editingId, form);
         setEditingId(null);
       } else {
-        await addDoc(collection(db, "users"), {
-          ...form,
-          lastScore: 0,
-          lastPlayed: new Date(),
-          updatedAt: Date.now(),
-        });
+        await adminCreateUser(form);
       }
 
       setForm({ name: "", email: "", address: "", photoURL: "" });
-    } catch (error) {
-      console.error("Error saving user:", error);
+      await loadUsers();
+    } catch (err) {
+      console.error("Error saving user:", err);
+      alert(err.message || "Failed to save user.");
     } finally {
       setLoading(false);
     }
   };
 
-  //  Edit User
   const handleEdit = (user) => {
     setForm({
       name: user.name || "",
@@ -94,24 +76,33 @@ const ProfileManager = () => {
     setEditingId(user.id);
   };
 
-  //  Delete User
   const handleDelete = async (id) => {
-    if (confirm("Are you sure you want to delete this user?")) {
-      await deleteDoc(doc(db, "users", id));
+    if (!confirm("Are you sure you want to delete this user?")) return;
+    try {
+      await adminDeleteUser(id);
+      await loadUsers();
+    } catch (err) {
+      alert(err.message || "Failed to delete user.");
     }
   };
 
-  //  Filtered Users
-  const filteredUsers = users.filter(
-    (u) =>
-      u.name?.toLowerCase().includes(search.toLowerCase()) ||
-      u.email?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredUsers = users
+    .filter(
+      (u) =>
+        u.name?.toLowerCase().includes(search.toLowerCase()) ||
+        u.email?.toLowerCase().includes(search.toLowerCase())
+    )
+    .sort((a, b) => {
+      const aTime = a.updatedAt?.seconds || a.updatedAt?._seconds || 0;
+      const bTime = b.updatedAt?.seconds || b.updatedAt?._seconds || 0;
+      if (sortBy === "oldest") return aTime - bTime;
+      if (sortBy === "newest") return bTime - aTime;
+      return 0;
+    });
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6 md:p-10 font-sans">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="flex flex-col md:flex-row items-center justify-between mb-8">
           <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">
             Profile Manager
@@ -121,7 +112,12 @@ const ProfileManager = () => {
           </span>
         </div>
 
-        {/* Search + Sort Controls */}
+        {error ? (
+          <p className="mb-4 text-red-600 bg-red-50 border border-red-200 rounded-lg p-3 text-sm">
+            {error}
+          </p>
+        ) : null}
+
         <div className="flex flex-col md:flex-row gap-4 items-center mb-8">
           <input
             type="text"
@@ -141,7 +137,6 @@ const ProfileManager = () => {
           </select>
         </div>
 
-        {/* Add / Edit Form */}
         <form
           onSubmit={handleSubmit}
           className="bg-white border border-gray-200 rounded-2xl shadow-lg p-6 md:p-8 hover:shadow-xl transition space-y-5 mb-12"
@@ -200,15 +195,10 @@ const ProfileManager = () => {
                 : "bg-indigo-600 hover:bg-indigo-700 text-white"
             }`}
           >
-            {loading
-              ? "Saving..."
-              : editingId
-              ? "Update User"
-              : "Add User"}
+            {loading ? "Saving..." : editingId ? "Update User" : "Add User"}
           </button>
         </form>
 
-        {/* User List */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredUsers.map((user) => (
             <div

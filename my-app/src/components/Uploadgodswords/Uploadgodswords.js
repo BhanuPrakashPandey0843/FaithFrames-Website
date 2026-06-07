@@ -3,15 +3,12 @@ import React, { useState, useEffect } from "react";
 import {
   getFirestore,
   collection,
-  addDoc,
-  deleteDoc,
-  doc,
   onSnapshot,
-  serverTimestamp,
   query,
   orderBy,
 } from "firebase/firestore";
 import { app } from "../../firebase";
+import { adminCreate, adminDelete } from "../../lib/adminApi";
 
 const db = getFirestore(app);
 
@@ -51,11 +48,10 @@ const Uploadgodswords = () => {
     }
     try {
       setLoading(true);
-      await addDoc(collection(db, "studyPlans"), {
+      await adminCreate("studyPlans", {
         ...form,
         duration:
-          form.duration.charAt(0).toUpperCase() + form.duration.slice(1), // normalize
-        createdAt: serverTimestamp(),
+          form.duration.charAt(0).toUpperCase() + form.duration.slice(1),
       });
       alert("✅ Study Plan added");
       setForm({ title: "", image: "", description: "", duration: "3 Days" });
@@ -69,7 +65,7 @@ const Uploadgodswords = () => {
 
   const handleDelete = async (id) => {
     try {
-      await deleteDoc(doc(db, "studyPlans", id));
+      await adminDelete("studyPlans", id);
       alert("🗑️ Plan deleted");
     } catch (error) {
       console.error(error);

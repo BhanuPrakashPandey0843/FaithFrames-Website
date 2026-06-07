@@ -1,94 +1,199 @@
 Folder PATH listing
 Volume serial number is 8A4D-5FA0
 E:.
-ï¿½   .gitignore
-ï¿½   eslint.config.mjs
-ï¿½   jsconfig.json
-ï¿½   netlify.toml
-ï¿½   next.config.mjs
-ï¿½   package-lock.json
-ï¿½   package.json
-ï¿½   postcss.config.mjs
-ï¿½   README.md
-ï¿½   structure.txt
-ï¿½   
-ï¿½ï¿½ï¿½ï¿½public
-ï¿½       file.svg
-ï¿½       globe.svg
-ï¿½       next.svg
-ï¿½       vercel.svg
-ï¿½       window.svg
-ï¿½       
-ï¿½ï¿½ï¿½ï¿½src
-    ï¿½ï¿½ï¿½ï¿½app
-    ï¿½   ï¿½   favicon.ico
-    ï¿½   ï¿½   globals.css
-    ï¿½   ï¿½   layout.js
-    ï¿½   ï¿½   page.js
-    ï¿½   ï¿½   
-    ï¿½   ï¿½ï¿½ï¿½ï¿½admin
-    ï¿½   ï¿½   ï¿½   page.js
-    ï¿½   ï¿½   ï¿½   
-    ï¿½   ï¿½   ï¿½ï¿½ï¿½ï¿½uploads
-    ï¿½   ï¿½       ï¿½ï¿½ï¿½ï¿½upload-quiz
-    ï¿½   ï¿½       ï¿½       page.js
-    ï¿½   ï¿½       ï¿½       
-    ï¿½   ï¿½       ï¿½ï¿½ï¿½ï¿½upload-wallpaper
-    ï¿½   ï¿½               page.js
-    ï¿½   ï¿½               
-    ï¿½   ï¿½ï¿½ï¿½ï¿½contact
-    ï¿½   ï¿½       page.js
-    ï¿½   ï¿½       
-    ï¿½   ï¿½ï¿½ï¿½ï¿½login
-    ï¿½   ï¿½       page.js
-    ï¿½   ï¿½       
-    ï¿½   ï¿½ï¿½ï¿½ï¿½logout
-    ï¿½   ï¿½       page.js
-    ï¿½   ï¿½       
-    ï¿½   ï¿½ï¿½ï¿½ï¿½signup
-    ï¿½           page.js
-    ï¿½           
-    ï¿½ï¿½ï¿½ï¿½components
-        ï¿½ï¿½ï¿½ï¿½About
-        ï¿½       About.js
-        ï¿½       
-        ï¿½ï¿½ï¿½ï¿½Dashboard
-        ï¿½       Dashboard.js
-        ï¿½       
-        ï¿½ï¿½ï¿½ï¿½Description
-        ï¿½       Description.js
-        ï¿½       
-        ï¿½ï¿½ï¿½ï¿½FaqSection
-        ï¿½       FaqSection.js
-        ï¿½       
-        ï¿½ï¿½ï¿½ï¿½Footer
-        ï¿½       Footer.js
-        ï¿½       
-        ï¿½ï¿½ï¿½ï¿½Hero
-        ï¿½       Faith.png
-        ï¿½       Hero.js
-        ï¿½       MiddlePhone.png
-        ï¿½       
-        ï¿½ï¿½ï¿½ï¿½Navbar
-        ï¿½       Navbar.js
-        ï¿½       
-        ï¿½ï¿½ï¿½ï¿½Newsletter
-        ï¿½       lockbg.png
-        ï¿½       Newsletter.js
-        ï¿½       newsletterbg.png
-        ï¿½       
-        ï¿½ï¿½ï¿½ï¿½Sidebar
-        ï¿½       Sidebar.js
-        ï¿½       
-        ï¿½ï¿½ï¿½ï¿½Signin
-        ï¿½       Signin.js
-        ï¿½       
-        ï¿½ï¿½ï¿½ï¿½Signup
-        ï¿½       Signup.js
-        ï¿½       
-        ï¿½ï¿½ï¿½ï¿½Testimonial
-        ï¿½       Testimonial.js
-        ï¿½       
-        ï¿½ï¿½ï¿½ï¿½ui
-                card.js
+³   .gitignore
+³   eslint.config.mjs
+³   jsconfig.json
+³   netlify.toml
+³   next.config.mjs
+³   out.rar
+³   package-lock.json
+³   package.json
+³   postcss.config.mjs
+³   README.md
+³   structure.txt
+³   
+ÃÄÄÄpublic
+³   ³   file.svg
+³   ³   globe.svg
+³   ³   next.svg
+³   ³   vercel.svg
+³   ³   window.svg
+³   ³   
+³   ÀÄÄÄHero
+³           Faith.png
+³           MiddlePhone.png
+³           
+ÀÄÄÄsrc
+    ³   firebase.js
+    ³   
+    ÃÄÄÄapp
+    ³   ³   favicon.ico
+    ³   ³   globals.css
+    ³   ³   layout.js
+    ³   ³   page.js
+    ³   ³   
+    ³   ÃÄÄÄabout
+    ³   ³       page.js
+    ³   ³       
+    ³   ÃÄÄÄadmin
+    ³   ³   ³   page.js
+    ³   ³   ³   
+    ³   ³   ÀÄÄÄuploads
+    ³   ³       ÃÄÄÄprofile
+    ³   ³       ³       page.js
+    ³   ³       ³       
+    ³   ³       ÃÄÄÄupload-godswords
+    ³   ³       ³       page.js
+    ³   ³       ³       
+    ³   ³       ÃÄÄÄupload-meetShare
+    ³   ³       ³       page.js
+    ³   ³       ³       
+    ³   ³       ÃÄÄÄupload-prayers
+    ³   ³       ³       page.js
+    ³   ³       ³       
+    ³   ³       ÃÄÄÄupload-quiz
+    ³   ³       ³       page.js
+    ³   ³       ³       
+    ³   ³       ÃÄÄÄupload-quote
+    ³   ³       ³       page.js
+    ³   ³       ³       
+    ³   ³       ÃÄÄÄupload-verse
+    ³   ³       ³       page.js
+    ³   ³       ³       
+    ³   ³       ÃÄÄÄupload-wallpaper
+    ³   ³       ³       page.js
+    ³   ³       ³       
+    ³   ³       ÀÄÄÄupload-witness
+    ³   ³               page.js
+    ³   ³               
+    ³   ÃÄÄÄapi
+    ³   ³   ÀÄÄÄlogin
+    ³   ³           route.js
+    ³   ³           
+    ³   ÃÄÄÄcontact
+    ³   ³       page.js
+    ³   ³       
+    ³   ÃÄÄÄlogin
+    ³   ³       page.js
+    ³   ³       
+    ³   ÃÄÄÄlogout
+    ³   ³       page.js
+    ³   ³       
+    ³   ÃÄÄÄpricing
+    ³   ³       page.js
+    ³   ³       
+    ³   ÃÄÄÄprivacy-policy
+    ³   ³       page.js
+    ³   ³       
+    ³   ÃÄÄÄrefund-policy
+    ³   ³       page.js
+    ³   ³       
+    ³   ÃÄÄÄsignup
+    ³   ³       page.js
+    ³   ³       
+    ³   ÀÄÄÄterms-and-conditions
+    ³           page.js
+    ³           
+    ÀÄÄÄcomponents
+        ÃÄÄÄAbout
+        ³       About.js
+        ³       
+        ÃÄÄÄabouthero
+        ³       abouthero.js
+        ³       Faith.png
+        ³       MiddlePhone.png
+        ³       
+        ÃÄÄÄContactform
+        ³       Contactform.js
+        ³       
+        ÃÄÄÄContacthero
+        ³       Contacthero.js
+        ³       Faith.png
+        ³       MiddlePhone.png
+        ³       
+        ÃÄÄÄDailyVerseAdminPanel
+        ³       DailyVerseAdminPanel.js
+        ³       
+        ÃÄÄÄDashboard
+        ³       Dashboard.js
+        ³       
+        ÃÄÄÄDescription
+        ³       Description.js
+        ³       
+        ÃÄÄÄFaqSection
+        ³       FaqSection.js
+        ³       
+        ÃÄÄÄFooter
+        ³       Footer.js
+        ³       
+        ÃÄÄÄHero
+        ³       Faith.png
+        ³       Faithh.png
+        ³       Hero.js
+        ³       MiddlePhone.png
+        ³       
+        ÃÄÄÄNavbar
+        ³       Navbar.js
+        ³       
+        ÃÄÄÄNewsletter
+        ³       lockbg.png
+        ³       Newsletter.js
+        ³       newsletterbg.png
+        ³       
+        ÃÄÄÄPricing
+        ³       Pricing.js
+        ³       
+        ÃÄÄÄpricinghero
+        ³       Faith.png
+        ³       MiddlePhone.png
+        ³       pricinghero.js
+        ³       
+        ÃÄÄÄprivacy-policyhero
+        ³       privacy-policyhero.js
+        ³       
+        ÃÄÄÄProfilemanager
+        ³       Profilemanager.js
+        ³       
+        ÃÄÄÄRefundhero
+        ³       Refundhero.js
+        ³       
+        ÃÄÄÄSidebar
+        ³       Sidebar.js
+        ³       
+        ÃÄÄÄSignin
+        ³       Signin.js
+        ³       
+        ÃÄÄÄSignup
+        ³       Signup.js
+        ³       
+        ÃÄÄÄTermshero
+        ³       Termshero.js
+        ³       
+        ÃÄÄÄTestimonial
+        ³       Testimonial.js
+        ³       
+        ÃÄÄÄui
+        ³       card.js
+        ³       
+        ÃÄÄÄUploadgodswords
+        ³       Uploadgodswords.js
+        ³       
+        ÃÄÄÄUploadmeetShare
+        ³       UploadmeetShare.js
+        ³       
+        ÃÄÄÄUploadPrayers
+        ³       UploadPrayers.js
+        ³       
+        ÃÄÄÄUploadQuiz
+        ³       UploadQuiz.js
+        ³       
+        ÃÄÄÄUploadQuotesPanel
+        ³       UploadQuotesPanel.js
+        ³       
+        ÃÄÄÄUploadWallpaper
+        ³       UploadWallpaper.js
+        ³       
+        ÀÄÄÄUploadWitness
+                UploadWitness.js
                 

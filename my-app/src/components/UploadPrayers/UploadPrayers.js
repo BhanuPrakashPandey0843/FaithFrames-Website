@@ -3,13 +3,10 @@ import React, { useState, useEffect } from "react";
 import { db } from "../../firebase";
 import {
   collection,
-  addDoc,
   onSnapshot,
-  deleteDoc,
-  doc,
-  updateDoc,
-  serverTimestamp,
 } from "firebase/firestore";
+import { uploadImageToCloudinary } from "../../lib/cloudinary";
+import { adminCreate, adminUpdate, adminDelete } from "../../lib/adminApi";
 
 export default function UploadPrayers() {
   const [verse, setVerse] = useState("");
@@ -37,32 +34,6 @@ export default function UploadPrayers() {
     return () => unsub();
   }, []);
 
-  // ✅ Upload image to Cloudinary
-  const uploadToCloudinary = async (file) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", "faithframes_uploads");
-    formData.append("folder", "faithframes/uploadverce");
-
-    try {
-      const response = await fetch(
-        "https://api.cloudinary.com/v1_1/dhliwva4d/image/upload",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error?.message || "Upload failed");
-      }
-      return data.secure_url;
-    } catch (err) {
-      console.error("Upload error:", err);
-      throw err;
-    }
-  };
-
   // ✅ Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -75,22 +46,21 @@ export default function UploadPrayers() {
       let imageUrl = "";
 
       if (imageFile) {
-        imageUrl = await uploadToCloudinary(imageFile);
+        imageUrl = await uploadImageToCloudinary(imageFile, "faithframes/prayers");
       }
 
       if (editId) {
-        await updateDoc(doc(db, "dailyprayers", editId), {
+        await adminUpdate("dailyprayers", editId, {
           verse,
           reference,
           ...(imageUrl && { bgurl: imageUrl }),
         });
         setEditId(null);
       } else {
-        await addDoc(collection(db, "dailyprayers"), {
+        await adminCreate("dailyprayers", {
           verse,
           reference,
-          bgurl: imageUrl,
-          createdAt: serverTimestamp(),
+          ...(imageUrl ? { bgurl: imageUrl } : {}),
         });
       }
       resetForm();
@@ -115,7 +85,7 @@ export default function UploadPrayers() {
   const handleDelete = async (id) => {
     if (!confirm("Are you sure you want to delete this prayer?")) return;
     try {
-      await deleteDoc(doc(db, "dailyprayers", id));
+      await adminDelete("dailyprayers", id);
     } catch (error) {
       console.error("Delete error:", error);
       alert("Failed to delete.");
@@ -167,20 +137,20 @@ export default function UploadPrayers() {
             value={verse}
             onChange={(e) => setVerse(e.target.value)}
             placeholder="Prayer text"
-            className="border border-gray-300 rounded-lg p-3 text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full border border-gray-300 rounded-lg p-3 text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
           <input
             type="text"
             value={reference}
             onChange={(e) => setReference(e.target.value)}
             placeholder="Reference (e.g., Matthew 5:9)"
-            className="border border-gray-300 rounded-lg p-3 text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full border border-gray-300 rounded-lg p-3 text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
           <input
             type="file"
             accept="image/*"
             onChange={handleImageChange}
-            className="border border-gray-300 rounded-lg p-3 text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full border border-gray-300 rounded-lg p-3 text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
           {previewUrl && (
             <div className="mt-2 relative">

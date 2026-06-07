@@ -1,9 +1,8 @@
 "use client";
 import React, { useState } from "react";
-import { getFirestore, collection, addDoc } from "firebase/firestore";
-import { app } from "../../firebase";
-
-const db = getFirestore(app);
+import { uploadImageToCloudinary } from "../../lib/cloudinary";
+import { validateImageFile, validateRequiredText } from "../../lib/validation";
+import { adminCreate } from "../../lib/adminApi";
 
 const UploadWallpaper = () => {
   const [form, setForm] = useState({
@@ -16,6 +15,7 @@ const UploadWallpaper = () => {
   });
   const [image, setImage] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -23,47 +23,34 @@ const UploadWallpaper = () => {
 
   const handleUpload = async (e) => {
     e.preventDefault();
-    if (!image || !form.title || !form.category) {
-      alert("Please fill all required fields");
+    setError("");
+
+    const titleCheck = validateRequiredText(form.title, 'Title', 120);
+    if (!titleCheck.ok) {
+      setError(titleCheck.message);
+      return;
+    }
+
+    const imageCheck = validateImageFile(image);
+    if (!imageCheck.ok) {
+      setError(imageCheck.message);
       return;
     }
 
     try {
       setLoading(true);
+      const url = await uploadImageToCloudinary(image, "faithframes/wallpapers");
 
-      // ✅ Upload to Cloudinary
-      const formData = new FormData();
-      formData.append("file", image);
-      formData.append("upload_preset", "your_upload_preset"); // from Cloudinary
-      formData.append("folder", "religious_wallpapers");
-
-      const res = await fetch(
-        "https://api.cloudinary.com/v1_1/your_cloud_name/image/upload",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      const data = await res.json();
-      const url = data.secure_url;
-
-      // ✅ Save to Firestore
-      await addDoc(collection(db, "religiousWallpapers"), {
-        id: Date.now(),
+      await adminCreate("religiousWallpapers", {
         uri: url,
-        title: form.title,
+        title: titleCheck.value,
         category: form.category,
-        country: form.country,
-        location: form.location,
+        country: form.country.trim(),
+        location: form.location.trim(),
         rating: form.rating || "0.0",
         reviews: form.reviews || "0",
-        uploadedAt: new Date(),
       });
 
-      alert("Wallpaper uploaded successfully ✅");
-
-      // Reset form
       setForm({
         title: "",
         category: "",
@@ -73,9 +60,10 @@ const UploadWallpaper = () => {
         reviews: "",
       });
       setImage(null);
-    } catch (error) {
-      console.error("Upload failed", error);
-      alert("Upload failed. Try again.");
+      alert("Wallpaper uploaded successfully");
+    } catch (uploadError) {
+      console.error("Upload failed", uploadError);
+      setError(uploadError.message || "Upload failed. Try again.");
     } finally {
       setLoading(false);
     }
@@ -92,7 +80,6 @@ const UploadWallpaper = () => {
           onSubmit={handleUpload}
           className="bg-white border border-gray-200 rounded-2xl shadow-md p-6 md:p-10 hover:shadow-lg transition space-y-5"
         >
-          {/* Title */}
           <input
             type="text"
             name="title"
@@ -101,9 +88,9 @@ const UploadWallpaper = () => {
             onChange={handleChange}
             className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none text-gray-800 font-medium"
             required
+            maxLength={120}
           />
 
-          {/* Category */}
           <select
             name="category"
             value={form.category}
@@ -119,7 +106,6 @@ const UploadWallpaper = () => {
             <option value="Buddhist">Buddhist</option>
           </select>
 
-          {/* Extra Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input
               type="text"
@@ -143,6 +129,8 @@ const UploadWallpaper = () => {
             <input
               type="number"
               step="0.1"
+              min="0"
+              max="5"
               name="rating"
               placeholder="Rating (e.g., 4.5)"
               value={form.rating}
@@ -151,6 +139,7 @@ const UploadWallpaper = () => {
             />
             <input
               type="number"
+              min="0"
               name="reviews"
               placeholder="Reviews (e.g., 120)"
               value={form.reviews}
@@ -159,16 +148,16 @@ const UploadWallpaper = () => {
             />
           </div>
 
-          {/* File Upload */}
           <input
             type="file"
             accept="image/*"
-            onChange={(e) => setImage(e.target.files[0])}
+            onChange={(e) => setImage(e.target.files?.[0] ?? null)}
             className="w-full p-4 border rounded-lg bg-gray-50 cursor-pointer focus:ring-2 focus:ring-indigo-400 focus:outline-none"
             required
           />
 
-          {/* Submit */}
+          {error ? <p className="text-red-600 text-sm">{error}</p> : null}
+
           <button
             type="submit"
             disabled={loading}
@@ -187,5 +176,3 @@ const UploadWallpaper = () => {
 };
 
 export default UploadWallpaper;
-
-

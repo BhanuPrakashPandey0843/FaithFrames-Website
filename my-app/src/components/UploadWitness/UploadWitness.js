@@ -3,14 +3,10 @@ import React, { useState, useEffect } from "react";
 import { db } from "@/firebase";
 import {
   collection,
-  addDoc,
   getDocs,
-  updateDoc,
-  deleteDoc,
-  doc,
-  serverTimestamp,
 } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
+import { adminCreate, adminUpdate, adminDelete } from "../../lib/adminApi";
 
 const UploadWitness = () => {
   const [witnessPosts, setWitnessPosts] = useState([]);
@@ -39,16 +35,18 @@ const UploadWitness = () => {
     e.preventDefault();
 
     const postData = {
-      ...newPost,
+      title: newPost.title,
+      message: newPost.message,
+      imageUrl: newPost.imageUrl,
+      userId: newPost.userId || "admin",
       likes: editingId ? newPost.likes || 0 : 0,
-      createdAt: editingId ? newPost.createdAt : serverTimestamp(),
     };
 
     if (editingId) {
-      await updateDoc(doc(db, "witnessPosts", editingId), postData);
+      await adminUpdate("witnessPosts", editingId, postData);
       setEditingId(null);
     } else {
-      await addDoc(postsRef, postData);
+      await adminCreate("witnessPosts", postData);
     }
 
     setNewPost({ title: "", message: "", imageUrl: "", userId: "admin" });
@@ -57,7 +55,7 @@ const UploadWitness = () => {
 
   // Delete post
   const handleDelete = async (id) => {
-    await deleteDoc(doc(db, "witnessPosts", id));
+    await adminDelete("witnessPosts", id);
     fetchPosts();
   };
 

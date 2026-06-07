@@ -1,12 +1,9 @@
-# netlify.toml
-
 [build]
   command = "npm run build"
   publish = ".next"
 
 [build.environment]
-  NODE_VERSION = "18"
-  NEXT_PRIVATE_TARGET = "server"
+  NODE_VERSION = "20"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"

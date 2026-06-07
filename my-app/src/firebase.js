@@ -1,26 +1,41 @@
-// firebase.js
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
-import { getAuth } from "firebase/auth"; // 👈 add this line
+import { getAuth } from "firebase/auth";
+import { isValidFirebaseConfig, resolveFirebaseConfig } from "./lib/firebaseConfig";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyADSJhSL-mUkh_HsHr6r0InrPxoxMo7QPU",
-  authDomain: "wallpaper-c74a3.firebaseapp.com",
-  projectId: "wallpaper-c74a3",
-  storageBucket: "wallpaper-c74a3.appspot.com",
-  messagingSenderId: "704605252889",
-  appId: "1:704605252889:web:fd7d4f666da70d2aeda988",
-};
+export const firebaseConfig = resolveFirebaseConfig();
+export const hasValidFirebaseConfig = isValidFirebaseConfig(firebaseConfig);
 
-// ✅ Initialize Firebase
-export const app = initializeApp(firebaseConfig);
+if (!hasValidFirebaseConfig && typeof window === "undefined") {
+  console.error(
+    "[Firebase] Missing config. Fill shared/firebase.env and run scripts/sync-firebase-env.ps1"
+  );
+}
 
-// ✅ Firestore
-export const db = getFirestore(app);
+let app = null;
+let db = null;
+let storage = null;
+let auth = null;
+let analytics = null;
 
-// ✅ Storage
-export const storage = getStorage(app);
+if (hasValidFirebaseConfig) {
+  app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+  db = getFirestore(app);
+  storage = getStorage(app);
+  auth = getAuth(app);
 
-// ✅ Auth
-export const auth = getAuth(app); // 👈 add this export
+  if (typeof window !== "undefined" && firebaseConfig.measurementId) {
+    import("firebase/analytics")
+      .then(({ getAnalytics, isSupported }) =>
+        isSupported().then((supported) => {
+          if (supported) analytics = getAnalytics(app);
+        })
+      )
+      .catch(() => {
+        // Analytics optional on admin panel
+      });
+  }
+}
+
+export { app, db, storage, auth, analytics };

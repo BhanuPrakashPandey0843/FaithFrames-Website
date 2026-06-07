@@ -1,15 +1,17 @@
 "use client";
-import React from 'react'
-import Sidebar from "../../components/Sidebar/Sidebar"
-import Dashboard from "../../components/Dashboard/Dashboard"
+import React from "react";
+import Sidebar from "../../components/Sidebar/Sidebar";
+import Dashboard from "../../components/Dashboard/Dashboard";
 
-const page = () => {
+const AdminPage = () => {
   return (
-    <div>
+    <div className="flex bg-gray-50 min-h-screen">
       <Sidebar />
-      <Dashboard />
+      <main className="flex-1 ml-20 md:ml-64 p-6 md:p-10 transition-all duration-500">
+        <Dashboard />
+      </main>
     </div>
-  )
-}
+  );
+};
 
-export default page
+export default AdminPage;

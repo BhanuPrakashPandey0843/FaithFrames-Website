@@ -3,17 +3,12 @@ import React, { useState, useEffect } from "react";
 import {
   getFirestore,
   collection,
-  addDoc,
-  deleteDoc,
-  doc,
   onSnapshot,
-  serverTimestamp,
   query,
   orderBy,
-  updateDoc,
-  increment,
 } from "firebase/firestore";
 import { app } from "../../firebase";
+import { adminCreate, adminUpdate, adminDelete } from "../../lib/adminApi";
 
 const db = getFirestore(app);
 
@@ -53,11 +48,10 @@ const UploadmeetShare = () => {
     }
     try {
       setLoading(true);
-      await addDoc(collection(db, "meetSessions"), {
+      await adminCreate("meetSessions", {
         ...form,
         likes: 0,
         dislikes: 0,
-        createdAt: serverTimestamp(),
       });
       alert("✅ Meet session added");
       setForm({ message: "", meetLink: "" });
@@ -72,7 +66,7 @@ const UploadmeetShare = () => {
   // 🗑️ Delete session
   const handleDelete = async (id) => {
     try {
-      await deleteDoc(doc(db, "meetSessions", id));
+      await adminDelete("meetSessions", id);
       alert("🗑️ Session deleted");
     } catch (error) {
       console.error(error);
@@ -83,9 +77,10 @@ const UploadmeetShare = () => {
   // 👍 Like & 👎 Dislike functions
   const handleLike = async (id, type) => {
     try {
-      const docRef = doc(db, "meetSessions", id);
-      await updateDoc(docRef, {
-        [type]: increment(1),
+      const session = sessions.find((item) => item.id === id);
+      if (!session) return;
+      await adminUpdate("meetSessions", id, {
+        [type]: (session[type] || 0) + 1,
       });
     } catch (error) {
       console.error("Error updating likes/dislikes:", error);

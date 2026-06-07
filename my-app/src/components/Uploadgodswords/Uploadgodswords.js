@@ -7,10 +7,11 @@ import {
   query,
   orderBy,
 } from "firebase/firestore";
-import { app } from "../../firebase";
+import { app, hasValidFirebaseConfig } from "../../firebase";
 import { adminCreate, adminDelete } from "../../lib/adminApi";
 
-const db = getFirestore(app);
+// Only initialize db if config is valid
+const db = hasValidFirebaseConfig ? getFirestore(app) : null;
 
 const Uploadgodswords = () => {
   const [form, setForm] = useState({
@@ -24,6 +25,7 @@ const Uploadgodswords = () => {
 
   // Real-time fetch with ordering
   useEffect(() => {
+    if (!db) return;
     const q = query(collection(db, "studyPlans"), orderBy("createdAt", "desc"));
     const unsub = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map((doc) => ({
@@ -34,7 +36,7 @@ const Uploadgodswords = () => {
     });
 
     return () => unsub();
-  }, []);
+  }, [db]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -42,6 +44,10 @@ const Uploadgodswords = () => {
 
   const handleAdd = async (e) => {
     e.preventDefault();
+    if (!db) {
+      alert("⚠️ Firebase not configured");
+      return;
+    }
     if (!form.title || !form.image || !form.description) {
       alert("⚠️ Please fill all required fields");
       return;
@@ -64,6 +70,10 @@ const Uploadgodswords = () => {
   };
 
   const handleDelete = async (id) => {
+    if (!db) {
+      alert("⚠️ Firebase not configured");
+      return;
+    }
     try {
       await adminDelete("studyPlans", id);
       alert("🗑️ Plan deleted");

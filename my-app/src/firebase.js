@@ -8,8 +8,8 @@ export const firebaseConfig = resolveFirebaseConfig();
 export const hasValidFirebaseConfig = isValidFirebaseConfig(firebaseConfig);
 
 if (!hasValidFirebaseConfig && typeof window === "undefined") {
-  console.error(
-    "[Firebase] Missing config. Fill shared/firebase.env and run scripts/sync-firebase-env.ps1"
+  console.warn(
+    "[Firebase] Config not fully set, but continuing for build"
   );
 }
 
@@ -37,5 +37,11 @@ if (hasValidFirebaseConfig) {
       });
   }
 }
+
+// Helper functions to safely get Firebase instances
+export function getFirebaseApp() { return app; }
+export function getFirebaseDb() { return db; }
+export function getFirebaseStorage() { return storage; }
+export function getFirebaseAuth() { return auth; }
 
 export { app, db, storage, auth, analytics };

@@ -1,0 +1,947 @@
+[
+  {
+    "question": "How many books are in the Old Testament?",
+    "options": ["39", "27", "66", "40"],
+    "correctIndex": 0,
+    "category": "bible",
+    "difficulty": "easy",
+    "reference": "Protestant Canon",
+    "explanation": "The Old Testament contains 39 books in the Protestant canon."
+  },
+  {
+    "question": "How many books are in the New Testament?",
+    "options": ["39", "27", "66", "40"],
+    "correctIndex": 1,
+    "category": "bible",
+    "difficulty": "easy",
+    "reference": "New Testament Canon",
+    "explanation": "The New Testament contains 27 books."
+  },
+  {
+    "question": "Who was the first man created by God?",
+    "options": ["Eve", "Adam", "Noah", "Moses"],
+    "correctIndex": 1,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Genesis 2:7",
+    "explanation": "God created Adam from the dust of the ground."
+  },
+  {
+    "question": "Who was the first woman created?",
+    "options": ["Mary", "Eve", "Sarah", "Ruth"],
+    "correctIndex": 1,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Genesis 2:21-22",
+    "explanation": "God created Eve from Adam's rib."
+  },
+  {
+    "question": "What fruit did Adam and Eve eat from the forbidden tree?",
+    "options": ["Apple", "Fig", "Pomegranate", "Not specified"],
+    "correctIndex": 3,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Genesis 3",
+    "explanation": "The Bible doesn't specify the type of fruit, only that it was from the tree of the knowledge of good and evil."
+  },
+  {
+    "question": "Who built the ark to save his family and animals from the flood?",
+    "options": ["Moses", "Noah", "Abraham", "David"],
+    "correctIndex": 1,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Genesis 6-8",
+    "explanation": "God told Noah to build an ark to escape the great flood."
+  },
+  {
+    "question": "How many days and nights did the flood last?",
+    "options": ["40", "7", "150", "365"],
+    "correctIndex": 0,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Genesis 7:12",
+    "explanation": "The rain fell on the earth for 40 days and 40 nights."
+  },
+  {
+    "question": "What was the sign of God's covenant with Noah?",
+    "options": ["Star", "Rainbow", "Cloud", "Fire"],
+    "correctIndex": 1,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Genesis 9:13",
+    "explanation": "God set the rainbow in the cloud as a sign of His covenant never to flood the whole earth again."
+  },
+  {
+    "question": "Who was called by God to leave his homeland and become the father of a great nation?",
+    "options": ["Isaac", "Jacob", "Abraham", "Joseph"],
+    "correctIndex": 2,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Genesis 12",
+    "explanation": "God called Abram (later Abraham) to leave Ur and go to Canaan."
+  },
+  {
+    "question": "What was Abraham's original name?",
+    "options": ["Abel", "Abram", "Abimelech", "Absalom"],
+    "correctIndex": 1,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Genesis 17:5",
+    "explanation": "God changed Abram's name to Abraham, meaning 'father of many nations'."
+  },
+  {
+    "question": "Who was Abraham's wife?",
+    "options": ["Rebekah", "Rachel", "Sarah", "Leah"],
+    "correctIndex": 2,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Genesis 11:29",
+    "explanation": "Sarah was Abraham's wife and the mother of Isaac."
+  },
+  {
+    "question": "What was Sarah's original name?",
+    "options": ["Sarai", "Salome", "Sapphira", "Samaritan"],
+    "correctIndex": 0,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Genesis 17:15",
+    "explanation": "God changed Sarai's name to Sarah, meaning 'princess'."
+  },
+  {
+    "question": "At what age did Sarah give birth to Isaac?",
+    "options": ["70", "80", "90", "100"],
+    "correctIndex": 2,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Genesis 17:17",
+    "explanation": "Sarah was 90 years old when she gave birth to Isaac."
+  },
+  {
+    "question": "Who was Abraham's son by Hagar?",
+    "options": ["Isaac", "Ishmael", "Jacob", "Esau"],
+    "correctIndex": 1,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Genesis 16",
+    "explanation": "Hagar was Sarah's maidservant, and she bore Ishmael to Abraham."
+  },
+  {
+    "question": "Which son did Abraham almost sacrifice on Mount Moriah?",
+    "options": ["Ishmael", "Isaac", "Jacob", "None"],
+    "correctIndex": 1,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Genesis 22",
+    "explanation": "God tested Abraham by asking him to sacrifice Isaac, but provided a ram as a substitute."
+  },
+  {
+    "question": "What was the name of Isaac's wife?",
+    "options": ["Rachel", "Leah", "Rebekah", "Dinah"],
+    "correctIndex": 2,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Genesis 24",
+    "explanation": "Abraham's servant found Rebekah to be Isaac's wife."
+  },
+  {
+    "question": "Who were Isaac's twin sons?",
+    "options": ["Moses and Aaron", "Jacob and Esau", "Cain and Abel", "Peter and Andrew"],
+    "correctIndex": 1,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Genesis 25:24",
+    "explanation": "Rebekah gave birth to twin sons: Esau and Jacob."
+  },
+  {
+    "question": "Who sold his birthright for a bowl of stew?",
+    "options": ["Jacob", "Esau", "Joseph", "Benjamin"],
+    "correctIndex": 1,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Genesis 25:29-34",
+    "explanation": "Esau traded his birthright to Jacob for some lentil stew."
+  },
+  {
+    "question": "Who had a coat of many colors?",
+    "options": ["Joseph", "David", "Solomon", "Daniel"],
+    "correctIndex": 0,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Genesis 37:3",
+    "explanation": "Jacob made a richly ornamented coat for Joseph, his favorite son."
+  },
+  {
+    "question": "How many sons did Jacob have?",
+    "options": ["10", "11", "12", "13"],
+    "correctIndex": 2,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Genesis 35:22-26",
+    "explanation": "Jacob had 12 sons, who became the 12 tribes of Israel."
+  },
+  {
+    "question": "Who was sold into slavery by his brothers?",
+    "options": ["Benjamin", "Joseph", "Judah", "Simeon"],
+    "correctIndex": 1,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Genesis 37",
+    "explanation": "Joseph's brothers sold him into slavery out of jealousy."
+  },
+  {
+    "question": "Where was Joseph taken as a slave?",
+    "options": ["Canaan", "Egypt", "Babylon", "Assyria"],
+    "correctIndex": 1,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Genesis 37:36",
+    "explanation": "Joseph was taken to Egypt and sold to Potiphar."
+  },
+  {
+    "question": "Who interpreted Pharaoh's dreams in Egypt?",
+    "options": ["Moses", "Aaron", "Joseph", "Daniel"],
+    "correctIndex": 2,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Genesis 41",
+    "explanation": "Joseph interpreted Pharaoh's dreams about 7 years of abundance followed by 7 years of famine."
+  },
+  {
+    "question": "Who led the Israelites out of Egypt?",
+    "options": ["Aaron", "Joshua", "Moses", "David"],
+    "correctIndex": 2,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Exodus 12",
+    "explanation": "God called Moses to lead the Israelites out of slavery in Egypt."
+  },
+  {
+    "question": "What was the name of Moses' brother?",
+    "options": ["Joshua", "Aaron", "Caleb", "Nadab"],
+    "correctIndex": 1,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Exodus 4:14",
+    "explanation": "Aaron was Moses' brother and helped him speak to the Israelites."
+  },
+  {
+    "question": "How many plagues did God send upon Egypt?",
+    "options": ["7", "8", "9", "10"],
+    "correctIndex": 3,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Exodus 7-12",
+    "explanation": "God sent 10 plagues upon Egypt to convince Pharaoh to let the Israelites go."
+  },
+  {
+    "question": "What was the last plague that finally convinced Pharaoh to free the Israelites?",
+    "options": ["Death of firstborn", "Frogs", "Hail", "Darkness"],
+    "correctIndex": 0,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Exodus 12:29",
+    "explanation": "The last plague was the death of all firstborn sons in Egypt, including Pharaoh's son."
+  },
+  {
+    "question": "What Jewish festival commemorates the tenth plague?",
+    "options": ["Passover", "Yom Kippur", "Hanukkah", "Purim"],
+    "correctIndex": 0,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Exodus 12",
+    "explanation": "Passover commemorates the Israelites' deliverance from Egypt and the Angel of Death 'passing over' their homes."
+  },
+  {
+    "question": "What body of water did Moses part so the Israelites could cross on dry land?",
+    "options": ["Jordan River", "Red Sea", "Dead Sea", "Sea of Galilee"],
+    "correctIndex": 1,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Exodus 14",
+    "explanation": "God parted the Red Sea (or Reed Sea) to allow the Israelites to escape from Pharaoh's army."
+  },
+  {
+    "question": "What did Moses receive on Mount Sinai?",
+    "options": ["Ten Commandments", "Ark of the Covenant", "Manna", "Stick that budded"],
+    "correctIndex": 0,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Exodus 20",
+    "explanation": "God gave Moses the Ten Commandments on Mount Sinai."
+  },
+  {
+    "question": "How many commandments did God give Moses?",
+    "options": ["5", "7", "10", "12"],
+    "correctIndex": 2,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Exodus 20:1-17",
+    "explanation": "God gave Moses the Ten Commandments on Mount Sinai."
+  },
+  {
+    "question": "What was the first commandment?",
+    "options": ["You shall not murder", "You shall not steal", "You shall have no other gods before Me", "Honor your father and mother"],
+    "correctIndex": 2,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Exodus 20:3",
+    "explanation": "The first commandment is to have no other gods before the Lord."
+  },
+  {
+    "question": "What food did God provide for the Israelites in the wilderness?",
+    "options": ["Bread", "Quail", "Manna", "All of these"],
+    "correctIndex": 3,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Exodus 16",
+    "explanation": "God provided manna (bread from heaven) and quail for the Israelites to eat in the wilderness."
+  },
+  {
+    "question": "How long did the Israelites wander in the wilderness?",
+    "options": ["20 years", "40 years", "60 years", "80 years"],
+    "correctIndex": 1,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Numbers 14:34",
+    "explanation": "The Israelites wandered in the wilderness for 40 years because of their disobedience."
+  },
+  {
+    "question": "Who became the leader of the Israelites after Moses died?",
+    "options": ["Aaron", "Joshua", "Caleb", "Samuel"],
+    "correctIndex": 1,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Deuteronomy 31:23",
+    "explanation": "God commissioned Joshua to lead the Israelites into the Promised Land after Moses' death."
+  },
+  {
+    "question": "What city did the Israelites conquer first in Canaan?",
+    "options": ["Jerusalem", "Jericho", "Ai", "Gibeah"],
+    "correctIndex": 1,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Joshua 6",
+    "explanation": "The Israelites first conquered Jericho, where the walls fell after they marched around the city for 7 days."
+  },
+  {
+    "question": "Who was the strongest man in the Bible?",
+    "options": ["David", "Samson", "Goliath", "Hercules"],
+    "correctIndex": 1,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Judges 13-16",
+    "explanation": "Samson was given great strength by God as long as his hair was never cut."
+  },
+  {
+    "question": "Who was Samson's Philistine lover who betrayed him?",
+    "options": ["Ruth", "Delilah", "Esther", "Jezebel"],
+    "correctIndex": 1,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Judges 16",
+    "explanation": "Delilah tricked Samson into revealing the secret of his strength."
+  },
+  {
+    "question": "Who was the first king of Israel?",
+    "options": ["David", "Solomon", "Saul", "Samuel"],
+    "correctIndex": 2,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "1 Samuel 10",
+    "explanation": "Samuel anointed Saul as the first king of Israel."
+  },
+  {
+    "question": "Who was the shepherd boy who killed Goliath?",
+    "options": ["David", "Samuel", "Saul", "Jonathan"],
+    "correctIndex": 0,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "1 Samuel 17",
+    "explanation": "David killed the Philistine giant Goliath with a sling and a stone."
+  },
+  {
+    "question": "What was Goliath's nationality?",
+    "options": ["Philistine", "Canaanite", "Amalekite", "Hittite"],
+    "correctIndex": 0,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "1 Samuel 17:4",
+    "explanation": "Goliath was a champion of the Philistines."
+  },
+  {
+    "question": "Who was David's best friend and Saul's son?",
+    "options": ["Jonathan", "Absalom", "Adonijah", "Solomon"],
+    "correctIndex": 0,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "1 Samuel 18:1",
+    "explanation": "Jonathan, Saul's son, had a deep friendship with David."
+  },
+  {
+    "question": "Which king built the first Temple in Jerusalem?",
+    "options": ["David", "Solomon", "Hezekiah", "Josiah"],
+    "correctIndex": 1,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "1 Kings 6",
+    "explanation": "Solomon built the first Temple in Jerusalem as a house for the Lord."
+  },
+  {
+    "question": "What gift did the Queen of Sheba give Solomon?",
+    "options": ["Gold", "Spices", "Precious stones", "All of these"],
+    "correctIndex": 3,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "1 Kings 10",
+    "explanation": "The Queen of Sheba gave Solomon great quantities of gold, spices, and precious stones."
+  },
+  {
+    "question": "How many wives did Solomon have?",
+    "options": ["100", "300", "700", "1000"],
+    "correctIndex": 2,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "1 Kings 11:3",
+    "explanation": "Solomon had 700 wives and 300 concubines, which turned his heart away from God."
+  },
+  {
+    "question": "Who was swallowed by a great fish?",
+    "options": ["Jonah", "Elijah", "Elisha", "Daniel"],
+    "correctIndex": 0,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Jonah 1:17",
+    "explanation": "God prepared a great fish to swallow Jonah after he tried to run from God's call to preach to Nineveh."
+  },
+  {
+    "question": "What city did God tell Jonah to preach to?",
+    "options": ["Nineveh", "Jerusalem", "Jericho", "Nazareth"],
+    "correctIndex": 0,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Jonah 1:2",
+    "explanation": "God commanded Jonah to go to Nineveh and preach against its wickedness."
+  },
+  {
+    "question": "How many days was Jonah in the belly of the fish?",
+    "options": ["1 day", "2 days", "3 days", "4 days"],
+    "correctIndex": 2,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Jonah 1:17",
+    "explanation": "Jonah was in the belly of the fish for three days and three nights."
+  },
+  {
+    "question": "Who was taken to Babylon during the exile?",
+    "options": ["Daniel", "Shadrach", "Meshach", "All of these"],
+    "correctIndex": 3,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Daniel 1",
+    "explanation": "Daniel, Shadrach, Meshach, and Abednego were among the Israelites taken to Babylon."
+  },
+  {
+    "question": "What were the Hebrew names of Shadrach, Meshach, and Abednego?",
+    "options": ["Hananiah, Mishael, Azariah", "Daniel, Joshua, Caleb", "Moses, Aaron, Miriam", "None of these"],
+    "correctIndex": 0,
+    "category": "old",
+    "difficulty": "medium",
+    "reference": "Daniel 1:6-7",
+    "explanation": "Their Hebrew names were Hananiah, Mishael, and Azariah."
+  },
+  {
+    "question": "What did King Nebuchadnezzar build that everyone was commanded to worship?",
+    "options": ["A golden idol", "A palace", "A ziggurat", "A temple"],
+    "correctIndex": 0,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Daniel 3:1",
+    "explanation": "King Nebuchadnezzar built a golden image and commanded everyone to worship it."
+  },
+  {
+    "question": "What punishment was threatened for not worshipping the golden image?",
+    "options": ["Exile", "Furnace of fire", "Beheading", "Stoning"],
+    "correctIndex": 1,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Daniel 3:6",
+    "explanation": "Anyone who did not worship the golden image was to be thrown into a fiery furnace."
+  },
+  {
+    "question": "Who were thrown into the fiery furnace?",
+    "options": ["Daniel", "Shadrach, Meshach, Abednego", "Nebuchadnezzar", "All of these"],
+    "correctIndex": 1,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Daniel 3:20",
+    "explanation": "Shadrach, Meshach, and Abednego were thrown into the furnace for refusing to worship the golden image."
+  },
+  {
+    "question": "Who did Shadrach, Meshach, and Abednego see in the furnace with them?",
+    "options": ["An angel", "A fourth person like a son of the gods", "Moses", "The king"],
+    "correctIndex": 1,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Daniel 3:25",
+    "explanation": "King Nebuchadnezzar saw a fourth person in the furnace, 'like a son of the gods,' with them."
+  },
+  {
+    "question": "What was Daniel's famous ability?",
+    "options": ["Dream interpretation", "Healing", "Flying", "Making gold"],
+    "correctIndex": 0,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Daniel 2",
+    "explanation": "God gave Daniel the ability to interpret dreams and visions."
+  },
+  {
+    "question": "What was Daniel thrown into for praying to God?",
+    "options": ["A fiery furnace", "A den of lions", "A prison cell", "A well"],
+    "correctIndex": 1,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Daniel 6",
+    "explanation": "Daniel was thrown into the lions' den for praying to God despite the king's edict."
+  },
+  {
+    "question": "Who was the king during Daniel's time in the lions' den?",
+    "options": ["Nebuchadnezzar", "Darius", "Belshazzar", "Cyrus"],
+    "correctIndex": 1,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Daniel 6:1",
+    "explanation": "Darius the Mede was king when Daniel was thrown into the lions' den."
+  },
+  {
+    "question": "What happened to Daniel in the lions' den?",
+    "options": ["He was eaten by lions", "God sent an angel to shut the lions' mouths", "He escaped through a tunnel", "The king saved him"],
+    "correctIndex": 1,
+    "category": "old",
+    "difficulty": "easy",
+    "reference": "Daniel 6:22",
+    "explanation": "God sent an angel to shut the lions' mouths, and Daniel was unharmed."
+  },
+  {
+    "question": "Who was the mother of Jesus?",
+    "options": ["Mary Magdalene", "Mary", "Martha", "Elizabeth"],
+    "correctIndex": 1,
+    "category": "new",
+    "difficulty": "easy",
+    "reference": "Luke 1:27",
+    "explanation": "Mary was the virgin mother of Jesus, conceived by the Holy Spirit."
+  },
+  {
+    "question": "Who was Jesus' earthly father?",
+    "options": ["Peter", "Joseph", "Andrew", "James"],
+    "correctIndex": 1,
+    "category": "new",
+    "difficulty": "easy",
+    "reference": "Matthew 1:20",
+    "explanation": "Joseph was Mary's husband and Jesus' earthly father."
+  },
+  {
+    "question": "Where was Jesus born?",
+    "options": ["Nazareth", "Bethlehem", "Jerusalem", "Cana"],
+    "correctIndex": 1,
+    "category": "new",
+    "difficulty": "easy",
+    "reference": "Luke 2:4-7",
+    "explanation": "Jesus was born in Bethlehem, as prophesied in the Old Testament."
+  },
+  {
+    "question": "Who visited Jesus shortly after his birth?",
+    "options": ["Shepherds", "Wise men", "Both shepherds and wise men", "Kings"],
+    "correctIndex": 2,
+    "category": "new",
+    "difficulty": "easy",
+    "reference": "Luke 2:8-20; Matthew 2:1-12",
+    "explanation": "Shepherds came immediately after his birth, and wise men came later to worship him."
+  },
+  {
+    "question": "How many wise men came to visit Jesus?",
+    "options": ["1", "2", "3", "The Bible doesn't say"],
+    "correctIndex": 3,
+    "category": "new",
+    "difficulty": "easy",
+    "reference": "Matthew 2:1",
+    "explanation": "The Bible doesn't specify how many wise men there were—only that they brought three gifts: gold, frankincense, and myrrh."
+  },
+  {
+    "question": "What gifts did the wise men bring to Jesus?",
+    "options": ["Gold, frankincense, myrrh", "Silver, gold, diamonds", "Wool, linen, silk", "Spices, wine, oil"],
+    "correctIndex": 0,
+    "category": "new",
+    "difficulty": "easy",
+    "reference": "Matthew 2:11",
+    "explanation": "The wise men brought gifts of gold, frankincense, and myrrh to the baby Jesus."
+  },
+  {
+    "question": "Where did Jesus grow up?",
+    "options": ["Bethlehem", "Jerusalem", "Nazareth", "Capernaum"],
+    "correctIndex": 2,
+    "category": "new",
+    "difficulty": "easy",
+    "reference": "Matthew 2:23",
+    "explanation": "Jesus grew up in Nazareth, fulfilling the prophecy that he would be called a Nazarene."
+  },
+  {
+    "question": "At what age did Jesus begin his public ministry?",
+    "options": ["18", "25", "30", "40"],
+    "correctIndex": 2,
+    "category": "new",
+    "difficulty": "easy",
+    "reference": "Luke 3:23",
+    "explanation": "Jesus was about 30 years old when he began his public ministry."
+  },
+  {
+    "question": "Who baptized Jesus?",
+    "options": ["Peter", "John the Baptist", "Paul", "James"],
+    "correctIndex": 1,
+    "category": "new",
+    "difficulty": "easy",
+    "reference": "Matthew 3:13-17",
+    "explanation": "John the Baptist baptized Jesus in the Jordan River."
+  },
+  {
+    "question": "Where was Jesus baptized?",
+    "options": ["Sea of Galilee", "Dead Sea", "Jordan River", "Pool of Siloam"],
+    "correctIndex": 2,
+    "category": "new",
+    "difficulty": "easy",
+    "reference": "Matthew 3:13",
+    "explanation": "Jesus was baptized in the Jordan River by John the Baptist."
+  },
+  {
+    "question": "What happened when Jesus was baptized?",
+    "options": ["The Holy Spirit descended like a dove", "A voice from heaven said, 'This is my beloved Son'", "Both A and B", "Nothing special happened"],
+    "correctIndex": 2,
+    "category": "new",
+    "difficulty": "easy",
+    "reference": "Matthew 3:16-17",
+    "explanation": "The Holy Spirit descended like a dove, and a voice from heaven declared Jesus as God's beloved Son."
+  },
+  {
+    "question": "How long was Jesus tempted by Satan in the wilderness?",
+    "options": ["10 days", "20 days", "40 days", "100 days"],
+    "correctIndex": 2,
+    "category": "new",
+    "difficulty": "easy",
+    "reference": "Matthew 4:2",
+    "explanation": "Jesus was tempted by Satan in the wilderness for 40 days and 40 nights."
+  },
+  {
+    "question": "How many disciples did Jesus choose to be his closest followers?",
+    "options": ["6", "10", "12", "24"],
+    "correctIndex": 2,
+    "category": "new",
+    "difficulty": "easy",
+    "reference": "Luke 6:13-16",
+    "explanation": "Jesus chose 12 disciples (also called apostles) to be his closest followers."
+  },
+  {
+    "question": "Who was the first apostle called by Jesus?",
+    "options": ["Peter", "Andrew", "James", "John"],
+    "correctIndex": 1,
+    "category": "new",
+    "difficulty": "medium",
+    "reference": "John 1:40",
+    "explanation": "Andrew was the first apostle called by Jesus, and he brought his brother Peter."
+  },
+  {
+    "question": "What was Peter's original name?",
+    "options": ["Simon", "Andrew", "James", "John"],
+    "correctIndex": 0,
+    "category": "new",
+    "difficulty": "easy",
+    "reference": "John 1:42",
+    "explanation": "Peter's original name was Simon; Jesus renamed him Peter, which means 'rock'."
+  },
+  {
+    "question": "Which disciple was a tax collector?",
+    "options": ["Peter", "Matthew", "James", "Judas"],
+    "correctIndex": 1,
+    "category": "new",
+    "difficulty": "easy",
+    "reference": "Matthew 9:9",
+    "explanation": "Matthew (also called Levi) was a tax collector before becoming a disciple."
+  },
+  {
+    "question": "Who was Jesus' most trusted disciple, referred to as 'the disciple Jesus loved'?",
+    "options": ["Peter", "James", "John", "Thomas"],
+    "correctIndex": 2,
+    "category": "new",
+    "difficulty": "easy",
+    "reference": "John 13:23",
+    "explanation": "John is referred to as 'the disciple Jesus loved' in the Gospel of John."
+  },
+  {
+    "question": "Who was the disciple who denied knowing Jesus three times?",
+    "options": ["Peter", "James", "John", "Judas"],
+    "correctIndex": 0,
+    "category": "new",
+    "difficulty": "easy",
+    "reference": "Matthew 26:69-75",
+    "explanation": "Peter denied knowing Jesus three times, as Jesus had predicted."
+  },
+  {
+    "question": "Who betrayed Jesus for 30 pieces of silver?",
+    "options": ["Peter", "James", "Judas Iscariot", "Judas son of James"],
+    "correctIndex": 2,
+    "category": "new",
+    "difficulty": "easy",
+    "reference": "Matthew 26:14-16",
+    "explanation": "Judas Iscariot betrayed Jesus to the chief priests for 30 pieces of silver."
+  },
+  {
+    "question": "Which disciple doubted Jesus' resurrection until he saw and touched him?",
+    "options": ["Peter", "John", "Thomas", "Philip"],
+    "correctIndex": 2,
+    "category": "new",
+    "difficulty": "easy",
+    "reference": "John 20:24-29",
+    "explanation": "Thomas doubted Jesus had risen until he saw and touched Jesus' scars."
+  },
+  {
+    "question": "What was Jesus' first miracle?",
+    "options": ["Healing a leper", "Turning water into wine", "Walking on water", "Raising Lazarus"],
+    "correctIndex": 1,
+    "category": "new",
+    "difficulty": "easy",
+    "reference": "John 2:1-11",
+    "explanation": "Jesus' first miracle was turning water into wine at a wedding in Cana."
+  },
+  {
+    "question": "Where did Jesus turn water into wine?",
+    "options": ["Cana", "Capernaum", "Nazareth", "Jerusalem"],
+    "correctIndex": 0,
+    "category": "new",
+    "difficulty": "easy",
+    "reference": "John 2:1",
+    "explanation": "Jesus turned water into wine at a wedding in Cana of Galilee."
+  },
+  {
+    "question": "What is the shortest verse in the Bible?",
+    "options": ["Jesus wept", "God is love", "The Lord is my shepherd", "In the beginning"],
+    "correctIndex": 0,
+    "category": "bible",
+    "difficulty": "easy",
+    "reference": "John 11:35",
+    "explanation": "Jesus wept' is the shortest verse in most translations of the Bible, showing Jesus' deep compassion."
+  },
+  {
+    "question": "Who did Jesus raise from the dead in the story 'Jesus wept'?",
+    "options": ["Jairus' daughter", "The widow's son at Nain", "Lazarus", "Tabitha"],
+    "correctIndex": 2,
+    "category": "new",
+    "difficulty": "easy",
+    "reference": "John 11:38-44",
+    "explanation": "Jesus raised his friend Lazarus from the dead after he had been buried for four days."
+  },
+  {
+    "question": "How many people did Jesus feed with five loaves of bread and two fish?",
+    "options": ["500", "1000", "5000", "10,000"],
+    "correctIndex": 2,
+    "category": "new",
+    "difficulty": "easy",
+    "reference": "Matthew 14:19-21",
+    "explanation": "Jesus fed about 5,000 men, plus women and children, with just five loaves and two fish."
+  },
+  {
+    "question": "How many times did Jesus walk on water?",
+    "options": ["Once", "Twice", "Three times", "Never"],
+    "correctIndex": 0,
+    "category": "new",
+    "difficulty": "easy",
+    "reference": "Matthew 14:25",
+    "explanation": "Jesus walked on the water once to reach his disciples' boat."
+  },
+  {
+    "question": "What did Jesus do during the Last Supper?",
+    "options": ["Washed the disciples' feet", "Instituted communion (Eucharist)", "Both A and B", "Predicted Peter's denial"],
+    "correctIndex": 2,
+    "category": "new",
+    "difficulty": "easy",
+    "reference": "John 13:1-17; Matthew 26:26-30",
+    "explanation": "During the Last Supper, Jesus washed the disciples' feet and instituted communion with bread and wine representing his body and blood."
+  },
+  {
+    "question": "What day did Jesus die on the cross?",
+    "options": ["Sunday", "Monday", "Friday", "Saturday"],
+    "correctIndex": 2,
+    "category": "new",
+    "difficulty": "easy",
+    "reference": "Matthew 27:62",
+    "explanation": "Jesus died on a Friday, now remembered as Good Friday."
+  },
+  {
+    "question": "On what day did Jesus rise from the dead?",
+    "options": ["Sunday", "Monday", "Friday", "Saturday"],
+    "correctIndex": 0,
+    "category": "new",
+    "difficulty": "easy",
+    "reference": "Matthew 28:1-6",
+    "explanation": "Jesus rose from the dead on the first day of the week, Sunday, now celebrated as Easter."
+  },
+  {
+    "question": "Who was the first person to see Jesus after his resurrection?",
+    "options": ["Peter", "Mary Magdalene", "John", "James"],
+    "correctIndex": 1,
+    "category": "new",
+    "difficulty": "easy",
+    "reference": "John 20:11-18",
+    "explanation": "Mary Magdalene was the first person to see Jesus after his resurrection."
+  },
+  {
+    "question": "Who wrote the most books in the New Testament?",
+    "options": ["Paul", "John", "Peter", "Luke"],
+    "correctIndex": 0,
+    "category": "new",
+    "difficulty": "easy",
+    "reference": "New Testament Epistles",
+    "explanation": "Paul wrote 13 (or 14 if Hebrews is included) of the New Testament books."
+  },
+  {
+    "question": "What was Paul's original name?",
+    "options": ["Peter", "Saul", "John", "James"],
+    "correctIndex": 1,
+    "category": "new",
+    "difficulty": "easy",
+    "reference": "Acts 9:1-22",
+    "explanation": "Paul's original name was Saul; he had a dramatic conversion from persecuting Christians to being a follower of Jesus."
+  },
+  {
+    "question": "Where was Paul when he had his vision of Jesus?",
+    "options": ["Jerusalem", "Damascus", "Rome", "Corinth"],
+    "correctIndex": 1,
+    "category": "new",
+    "difficulty": "easy",
+    "reference": "Acts 9:3",
+    "explanation": "Paul (then Saul) was on his way to Damascus when he had a vision of Jesus."
+  },
+  {
+    "question": "What is the last book of the Bible?",
+    "options": ["Jude", "Revelation", "John", "Malachi"],
+    "correctIndex": 1,
+    "category": "bible",
+    "difficulty": "easy",
+    "reference": "Revelation 1:1",
+    "explanation": "Revelation is the last book of the Bible, containing apocalyptic visions of the end times."
+  },
+  {
+    "question": "Who wrote the Book of Revelation?",
+    "options": ["John the apostle", "Paul", "Peter", "A different John"],
+    "correctIndex": 3,
+    "category": "new",
+    "difficulty": "medium",
+    "reference": "Revelation 1:1",
+    "explanation": "The author identifies himself only as 'John', but scholars debate if it's the apostle John or another figure."
+  },
+  {
+    "question": "What does 'Gospel' mean?",
+    "options": ["God's story", "Good news", "Sacred text", "Prophecy"],
+    "correctIndex": 1,
+    "category": "bible",
+    "difficulty": "easy",
+    "reference": "New Testament Gospels",
+    "explanation": "Gospel means 'good news'—the good news of Jesus Christ's salvation."
+  },
+  {
+    "question": "How many Gospels are in the New Testament?",
+    "options": ["1", "2", "3", "4"],
+    "correctIndex": 3,
+    "category": "new",
+    "difficulty": "easy",
+    "reference": "Matthew, Mark, Luke, John",
+    "explanation": "There are four Gospels: Matthew, Mark, Luke, and John."
+  },
+  {
+    "question": "Which Gospel was written first?",
+    "options": ["Matthew", "Mark", "Luke", "John"],
+    "correctIndex": 1,
+    "category": "new",
+    "difficulty": "medium",
+    "reference": "New Testament scholarship",
+    "explanation": "Most scholars believe Mark's Gospel was the first one written."
+  },
+  {
+    "question": "What is the great commandment?",
+    "options": ["Love God with all your heart, soul, and mind", "Love your neighbor as yourself", "Both A and B", "Keep the Sabbath holy"],
+    "correctIndex": 2,
+    "category": "jesus",
+    "difficulty": "easy",
+    "reference": "Matthew 22:37-40",
+    "explanation": "Jesus summarized the law as loving God with all your being and loving your neighbor as yourself."
+  },
+  {
+    "question": "What is the Golden Rule?",
+    "options": ["Treat others as you want to be treated", "An eye for an eye", "Love your enemies", "Give to the poor"],
+    "correctIndex": 0,
+    "category": "jesus",
+    "difficulty": "easy",
+    "reference": "Matthew 7:12",
+    "explanation": "Jesus taught, 'So whatever you wish that others would do to you, do also to them, for this is the Law and the Prophets'."
+  },
+  {
+    "question": "What does 'Immanuel' mean?",
+    "options": ["God is with us", "Savior", "Messiah", "King of Kings"],
+    "correctIndex": 0,
+    "category": "jesus",
+    "difficulty": "easy",
+    "reference": "Matthew 1:23",
+    "explanation": "Immanuel (or Emmanuel) is a Hebrew name meaning 'God is with us'."
+  },
+  {
+    "question": "What does 'Christ' mean?",
+    "options": ["Teacher", "Savior", "Anointed One", "King"],
+    "correctIndex": 2,
+    "category": "jesus",
+    "difficulty": "easy",
+    "reference": "Greek translation",
+    "explanation": "Christ is the Greek translation of 'Messiah', which means 'Anointed One' in Hebrew."
+  },
+  {
+    "question": "What is the most common prayer in Christianity?",
+    "options": ["The Lord's Prayer", "Hail Mary", "Our Father", "Both A and C"],
+    "correctIndex": 3,
+    "category": "jesus",
+    "difficulty": "easy",
+    "reference": "Matthew 6:9-13",
+    "explanation": "The Lord's Prayer (also known as the Our Father) is the most common prayer taught by Jesus himself."
+  },
+  {
+    "question": "Who are the three persons of the Trinity?",
+    "options": ["Father, Son, Holy Spirit", "Father, Son, Mary", "Father, Son, Angels", "Jesus, Peter, Paul"],
+    "correctIndex": 0,
+    "category": "jesus",
+    "difficulty": "easy",
+    "reference": "Matthew 28:19",
+    "explanation": "The Trinity is the Christian doctrine of one God in three persons: Father, Son (Jesus), and Holy Spirit."
+  },
+  {
+    "question": "What is the main message of the Bible?",
+    "options": ["God's love and redemption of humanity through Jesus", "Rules for living a good life", "History of Israel", "Prophecies about the future"],
+    "correctIndex": 0,
+    "category": "bible",
+    "difficulty": "easy",
+    "reference": "John 3:16",
+    "explanation": "The main message of the Bible is God's love for humanity and His plan of redemption through Jesus Christ."
+  },
+  {
+    "question": "What is the first verse of the Bible?",
+    "options": ["In the beginning was the Word", "In the beginning God created the heavens and the earth", "The Lord is my shepherd", "The book of the generation of Jesus Christ"],
+    "correctIndex": 1,
+    "category": "bible",
+    "difficulty": "easy",
+    "reference": "Genesis 1:1",
+    "explanation": "The first verse of the Bible is 'In the beginning God created the heavens and the earth'."
+  },
+  {
+    "question": "What is the most famous verse in the Bible?",
+    "options": ["For God so loved the world", "The Lord is my shepherd", "I can do all things through Christ", "In the beginning"],
+    "correctIndex": 0,
+    "category": "bible",
+    "difficulty": "easy",
+    "reference": "John 3:16",
+    "explanation": "John 3:16 is often called the most famous verse: 'For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life'."
+  }
+]

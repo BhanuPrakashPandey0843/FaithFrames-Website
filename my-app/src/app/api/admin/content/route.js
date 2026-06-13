@@ -25,6 +25,42 @@ function validateCollection(collection) {
   return null;
 }
 
+function validateQuestionPayload(data) {
+  const question = String(data?.question || "").trim();
+  const options = Array.isArray(data?.options)
+    ? data.options.map((option) => String(option).trim()).filter(Boolean)
+    : [];
+
+  if (!question) {
+    return "Question text is required.";
+  }
+  if (options.length < 2) {
+    return "At least two answer options are required.";
+  }
+  if (typeof data.correctIndex !== "number" || data.correctIndex < 0 || data.correctIndex >= options.length) {
+    return "correctIndex must point to a valid answer option.";
+  }
+
+  return null;
+}
+
+function sanitizeQuestionPayload(data) {
+  const options = Array.isArray(data.options)
+    ? data.options.map((option) => String(option).trim()).filter(Boolean)
+    : [];
+
+  return {
+    question: String(data.question).trim(),
+    options,
+    correctIndex: Number(data.correctIndex),
+    category: String(data.category || "bible").trim().toLowerCase(),
+    difficulty: String(data.difficulty || "easy").trim().toLowerCase(),
+    reference: String(data.reference || "").trim(),
+    explanation: String(data.explanation || "").trim(),
+    active: data.active !== false,
+  };
+}
+
 function withCreateTimestamps(collection, data) {
   const payload = { ...data };
 
@@ -49,9 +85,18 @@ export async function POST(req) {
     return NextResponse.json({ message: "Missing data payload" }, { status: 400 });
   }
 
+  let payload = data;
+  if (collection === "questions") {
+    const validationError = validateQuestionPayload(data);
+    if (validationError) {
+      return NextResponse.json({ message: validationError }, { status: 400 });
+    }
+    payload = sanitizeQuestionPayload(data);
+  }
+
   try {
     const db = getAdminDb();
-    const ref = await db.collection(collection).add(withCreateTimestamps(collection, data));
+    const ref = await db.collection(collection).add(withCreateTimestamps(collection, payload));
     return NextResponse.json({ success: true, id: ref.id });
   } catch (err) {
     console.error("[admin/content POST]", err);
@@ -74,13 +119,22 @@ export async function PATCH(req) {
     return NextResponse.json({ message: "Missing data payload" }, { status: 400 });
   }
 
+  let payload = data;
+  if (collection === "questions") {
+    const validationError = validateQuestionPayload(data);
+    if (validationError) {
+      return NextResponse.json({ message: validationError }, { status: 400 });
+    }
+    payload = sanitizeQuestionPayload(data);
+  }
+
   try {
     const db = getAdminDb();
     await db
       .collection(collection)
       .doc(id)
       .update({
-        ...data,
+        ...payload,
         updatedAt: FieldValue.serverTimestamp(),
       });
     return NextResponse.json({ success: true, id });

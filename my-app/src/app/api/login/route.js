@@ -73,7 +73,7 @@ export async function POST(req) {
   try {
     const { email, password } = await req.json();
     const normalizedEmail = String(email ?? "").trim().toLowerCase();
-    const normalizedPassword = String(password ?? "");
+    const normalizedPassword = String(password ?? "").trim();
 
     if (!normalizedEmail || !normalizedPassword) {
       return NextResponse.json(

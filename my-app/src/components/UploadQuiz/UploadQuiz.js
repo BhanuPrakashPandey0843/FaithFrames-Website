@@ -89,14 +89,19 @@ const UploadQuiz = () => {
     const err = validate();
     if (err) { setError(err); return; }
 
+    const options = form.options.map((o) => o.trim()).filter(Boolean);
+    const correctRaw = form.options[form.correctIndex]?.trim() || "";
+    const correctIndex = options.indexOf(correctRaw);
+
     const payload = {
       question: form.question.trim(),
-      options: form.options.map((o) => o.trim()),
-      correctIndex: Number(form.correctIndex),
-      category: form.category,
-      difficulty: form.difficulty,
+      options,
+      correctIndex: correctIndex >= 0 ? correctIndex : 0,
+      category: form.category.trim().toLowerCase(),
+      difficulty: form.difficulty.trim().toLowerCase(),
       reference: form.reference.trim(),
       explanation: form.explanation.trim(),
+      active: true,
     };
 
     try {
@@ -168,14 +173,16 @@ const UploadQuiz = () => {
           console.warn("[UploadQuiz] Skipping malformed question:", q);
           continue;
         }
+        const options = q.options.map((o) => String(o).trim()).filter(Boolean);
         await adminCreate("questions", {
           question: String(q.question).trim(),
-          options: q.options.map((o) => String(o).trim()),
-          correctIndex: Number(q.correctIndex),
-          category: q.category || "bible",
-          difficulty: q.difficulty || "easy",
+          options,
+          correctIndex: Math.min(Number(q.correctIndex), Math.max(options.length - 1, 0)),
+          category: String(q.category || "bible").trim().toLowerCase(),
+          difficulty: String(q.difficulty || "easy").trim().toLowerCase(),
           reference: q.reference || "",
           explanation: q.explanation || "",
+          active: true,
         });
         count++;
       }

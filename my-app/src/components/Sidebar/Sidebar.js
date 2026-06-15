@@ -29,6 +29,7 @@ const menuItems = [
   { name: "Upload Witness", icon: MessageCircle, path: "/admin/uploads/upload-witness" },
   { name: "Upload God's Words", icon: BookOpen, path: "/admin/uploads/upload-godswords" },
   { name: "Upload Meet-Share", icon: Video, path: "/admin/uploads/upload-meetShare" },
+   { name: "Upload Stories", icon: Video, path: "/admin/uploads/upload-stories" },
   { name: "Profile", icon: User, path: "/admin/uploads/profile" },
 ];
 

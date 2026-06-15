@@ -7,6 +7,7 @@ export const ADMIN_CONTENT_COLLECTIONS = new Set([
   "studyPlans",
   "witnessPosts",
   "meetSessions",
+  "stories",
   "users",
 ]);
 

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Mail, Phone, User, MessageSquare } from "lucide-react";
+import { useToast } from "@/components/ui/Toast";
 
 export default function ContactForm() {
   const [formData, setFormData] = useState({
@@ -10,16 +11,40 @@ export default function ContactForm() {
     email: "",
     message: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const { addToast } = useToast();
 
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitted(true);
-    setTimeout(() => setIsSubmitted(false), 2500);
-    setFormData({ name: "", email: "", message: "" });
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        addToast({ type: "success", message: data.message });
+        setIsSubmitted(true);
+        setTimeout(() => setIsSubmitted(false), 2500);
+        setFormData({ name: "", email: "", message: "" });
+      } else {
+        addToast({ type: "error", message: data.error });
+      }
+    } catch (err) {
+      console.error(err);
+      addToast({ type: "error", message: "Failed to send message" });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -104,9 +129,10 @@ export default function ContactForm() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.97 }}
             type="submit"
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold text-lg shadow-md hover:shadow-lg transition-all"
+            disabled={isSubmitting}
+            className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold text-lg shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSubmitted ? "Message Sent ✅" : "Send Message"}
+            {isSubmitting ? "Sending..." : isSubmitted ? "Message Sent ✅" : "Send Message"}
           </motion.button>
         </form>
 

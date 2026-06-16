@@ -1,7 +1,7 @@
 export const ADMIN_CONTENT_COLLECTIONS = new Set([
   "religiousWallpapers",
   "dailyVerses",
-  "dailyprayers",
+  "dailyPrayers",
   "quotes",
   "questions",
   "studyPlans",
@@ -14,7 +14,7 @@ export const ADMIN_CONTENT_COLLECTIONS = new Set([
 export const ADMIN_STATS_COLLECTIONS = [
   { key: "wallpapers", collection: "religiousWallpapers" },
   { key: "verses", collection: "dailyVerses" },
-  { key: "prayers", collection: "dailyprayers" },
+  { key: "prayers", collection: "dailyPrayers" },
   { key: "questions", collection: "questions" },
   { key: "quotes", collection: "quotes" },
 ];

@@ -1,12 +1,13 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { db } from "@/firebase";
+import React, { useState, useEffect, useCallback } from "react";
+import { db } from "../../firebase";
 import {
   collection,
   getDocs,
 } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
 import { adminCreate, adminUpdate, adminDelete } from "../../lib/adminApi";
+import { useToast } from "@/components/ui/Toast";
 
 const UploadWitness = () => {
   const [witnessPosts, setWitnessPosts] = useState([]);
@@ -17,18 +18,19 @@ const UploadWitness = () => {
     userId: "admin", // default for admin
   });
   const [editingId, setEditingId] = useState(null);
+  const { addToast } = useToast();
 
   const postsRef = collection(db, "witnessPosts");
 
   // Fetch witness posts
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     const snapshot = await getDocs(postsRef);
     setWitnessPosts(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-  };
+  }, [postsRef]);
 
   useEffect(() => {
     fetchPosts();
-  }, []);
+  }, [fetchPosts]);
 
   // Add or update post
   const handleSubmit = async (e) => {
@@ -42,21 +44,33 @@ const UploadWitness = () => {
       likes: editingId ? newPost.likes || 0 : 0,
     };
 
-    if (editingId) {
-      await adminUpdate("witnessPosts", editingId, postData);
-      setEditingId(null);
-    } else {
-      await adminCreate("witnessPosts", postData);
+    try {
+      if (editingId) {
+        await adminUpdate("witnessPosts", editingId, postData);
+        addToast({ type: "success", message: "Testimony updated!" });
+        setEditingId(null);
+      } else {
+        await adminCreate("witnessPosts", postData);
+        addToast({ type: "success", message: "Testimony added!" });
+      }
+      setNewPost({ title: "", message: "", imageUrl: "", userId: "admin" });
+      await fetchPosts();
+    } catch (err) {
+      console.error(err);
+      addToast({ type: "error", message: "Failed to save testimony" });
     }
-
-    setNewPost({ title: "", message: "", imageUrl: "", userId: "admin" });
-    fetchPosts();
   };
 
   // Delete post
   const handleDelete = async (id) => {
-    await adminDelete("witnessPosts", id);
-    fetchPosts();
+    try {
+      await adminDelete("witnessPosts", id);
+      addToast({ type: "success", message: "Testimony deleted!" });
+      await fetchPosts();
+    } catch (err) {
+      console.error(err);
+      addToast({ type: "error", message: "Failed to delete testimony" });
+    }
   };
 
   return (

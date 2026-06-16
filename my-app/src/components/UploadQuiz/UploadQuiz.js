@@ -18,7 +18,7 @@
  * NOTE: we save correctIndex (number), NOT correctAnswer (string).
  * The mobile app grades answers by index — not by string comparison.
  */
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { db } from "../../firebase";
 import {
   collection,
@@ -29,6 +29,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { validateRequiredText } from "../../lib/validation";
 import { adminCreate, adminUpdate, adminDelete } from "../../lib/adminApi";
+import { useToast } from "@/components/ui/Toast";
 
 const CATEGORIES = ["bible", "jesus", "old", "new", "mixed"];
 const DIFFICULTIES = ["easy", "medium", "hard"];
@@ -51,11 +52,12 @@ const UploadQuiz = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [fetching, setFetching] = useState(true);
+  const { addToast } = useToast();
 
   const questionsRef = collection(db, "questions");
 
   // ─── Fetch questions ──────────────────────────────────────────────────────
-  const fetchQuestions = async () => {
+  const fetchQuestions = useCallback(async () => {
     setFetching(true);
     try {
       const snapshot = await getDocs(query(questionsRef, orderBy("createdAt", "desc")));
@@ -65,9 +67,9 @@ const UploadQuiz = () => {
     } finally {
       setFetching(false);
     }
-  };
+  }, [questionsRef]);
 
-  useEffect(() => { fetchQuestions(); }, []);
+  useEffect(() => { fetchQuestions(); }, [fetchQuestions]);
 
   // ─── Validate ─────────────────────────────────────────────────────────────
   const validate = () => {

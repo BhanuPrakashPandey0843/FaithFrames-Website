@@ -9,6 +9,7 @@ import {
 } from "firebase/firestore";
 import { app, hasValidFirebaseConfig } from "../../firebase";
 import { adminCreate, adminDelete } from "../../lib/adminApi";
+import { useToast } from "@/components/ui/Toast";
 
 // Only initialize db if config is valid
 const db = hasValidFirebaseConfig ? getFirestore(app) : null;
@@ -22,6 +23,7 @@ const Uploadgodswords = () => {
   });
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(false);
+  const { addToast } = useToast();
 
   // Real-time fetch with ordering
   useEffect(() => {
@@ -36,7 +38,7 @@ const Uploadgodswords = () => {
     });
 
     return () => unsub();
-  }, [db]);
+  }, []);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -45,11 +47,11 @@ const Uploadgodswords = () => {
   const handleAdd = async (e) => {
     e.preventDefault();
     if (!db) {
-      alert("⚠️ Firebase not configured");
+      addToast({ type: "warning", message: "Firebase not configured" });
       return;
     }
     if (!form.title || !form.image || !form.description) {
-      alert("⚠️ Please fill all required fields");
+      addToast({ type: "warning", message: "Please fill all required fields" });
       return;
     }
     try {
@@ -59,11 +61,11 @@ const Uploadgodswords = () => {
         duration:
           form.duration.charAt(0).toUpperCase() + form.duration.slice(1),
       });
-      alert("✅ Study Plan added");
+      addToast({ type: "success", message: "Study Plan added!" });
       setForm({ title: "", image: "", description: "", duration: "3 Days" });
     } catch (error) {
       console.error(error);
-      alert("❌ Error adding plan");
+      addToast({ type: "error", message: "Error adding plan" });
     } finally {
       setLoading(false);
     }
@@ -71,15 +73,15 @@ const Uploadgodswords = () => {
 
   const handleDelete = async (id) => {
     if (!db) {
-      alert("⚠️ Firebase not configured");
+      addToast({ type: "warning", message: "Firebase not configured" });
       return;
     }
     try {
       await adminDelete("studyPlans", id);
-      alert("🗑️ Plan deleted");
+      addToast({ type: "success", message: "Plan deleted!" });
     } catch (error) {
       console.error(error);
-      alert("❌ Error deleting plan");
+      addToast({ type: "error", message: "Error deleting plan" });
     }
   };
 

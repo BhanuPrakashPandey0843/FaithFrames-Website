@@ -23,7 +23,7 @@ export default function UploadPrayers() {
 
   // ✅ Fetch daily prayers from Firestore
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, "dailyprayers"), (snapshot) => {
+    const unsub = onSnapshot(collection(db, "dailyPrayers"), (snapshot) => {
       setPrayers(
         snapshot.docs.map((doc) => ({
           id: doc.id,
@@ -50,14 +50,14 @@ export default function UploadPrayers() {
       }
 
       if (editId) {
-        await adminUpdate("dailyprayers", editId, {
+        await adminUpdate("dailyPrayers", editId, {
           verse,
           reference,
           ...(imageUrl && { bgurl: imageUrl }),
         });
         setEditId(null);
       } else {
-        await adminCreate("dailyprayers", {
+        await adminCreate("dailyPrayers", {
           verse,
           reference,
           ...(imageUrl ? { bgurl: imageUrl } : {}),
@@ -85,7 +85,7 @@ export default function UploadPrayers() {
   const handleDelete = async (id) => {
     if (!confirm("Are you sure you want to delete this prayer?")) return;
     try {
-      await adminDelete("dailyprayers", id);
+      await adminDelete("dailyPrayers", id);
     } catch (error) {
       console.error("Delete error:", error);
       alert("Failed to delete.");

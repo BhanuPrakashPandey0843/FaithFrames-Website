@@ -8,7 +8,6 @@ export const ADMIN_CONTENT_COLLECTIONS = new Set([
   "witnessPosts",
   "meetSessions",
   "stories",
-  "users",
 ]);
 
 export const ADMIN_STATS_COLLECTIONS = [

@@ -16,6 +16,7 @@ import {
   Video,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -71,13 +72,22 @@ export default function Sidebar() {
       <div className="flex-1 overflow-y-auto">
         <div className="flex items-center justify-between px-4 py-5 border-b border-gray-200">
           {isOpen && (
-            <motion.h2
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-lg font-bold tracking-wide text-[#558AFF]"
-            >
-              Faith Admin
-            </motion.h2>
+            <Link href="/admin" className="flex items-center gap-2">
+              <Image
+                src="/Hero/Faith.png"
+                alt="Faith Frames"
+                width={32}
+                height={32}
+                className="rounded-md object-cover"
+              />
+              <motion.h2
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-lg font-bold tracking-wide text-[#558AFF]"
+              >
+                Faith Admin
+              </motion.h2>
+            </Link>
           )}
           <button
             onClick={() => setIsOpen((o) => !o)}

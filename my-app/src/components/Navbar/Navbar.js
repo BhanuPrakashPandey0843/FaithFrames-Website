@@ -2,12 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import Link from "next/link";
-import { X } from "lucide-react";
+import { X, Moon, Sun } from "lucide-react";
+import { useTheme } from "@/context/ThemeContext";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolling, setScrolling] = useState(false);
+  const { isDark, toggleTheme } = useTheme();
 
   useEffect(() => {
     const handleScroll = () => setScrolling(window.scrollY > 20);
@@ -34,13 +37,22 @@ export default function Navbar() {
       transition={{ duration: 0.6, ease: "easeOut" }}
     >
       <div className="max-w-7xl mx-auto flex justify-between items-center px-6 py-4">
-        {/* ✅ Elegant Logo */}
-        <motion.div
-          whileHover={{ scale: 1.05 }}
-          className="text-2xl font-bold tracking-tight bg-gradient-to-r from-black to-gray-700 bg-clip-text text-transparent cursor-pointer"
-        >
-          Faith Frames
-        </motion.div>
+        <Link href="/" className="flex items-center gap-3">
+          <Image
+            src="/Hero/Faith.png"
+            alt="Faith Frames logo"
+            width={40}
+            height={40}
+            className="rounded-lg object-cover"
+            priority
+          />
+          <motion.span
+            whileHover={{ scale: 1.02 }}
+            className="text-2xl font-bold tracking-tight bg-gradient-to-r from-black to-gray-700 bg-clip-text text-transparent"
+          >
+            Faith Frames
+          </motion.span>
+        </Link>
 
         {/* ✅ Desktop Nav Links */}
         <div className="hidden lg:flex items-center gap-10">
@@ -66,6 +78,14 @@ export default function Navbar() {
 
         {/* ✅ Desktop Auth Buttons */}
         <div className="hidden lg:flex items-center gap-4">
+          <button
+            type="button"
+            onClick={toggleTheme}
+            aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+            className="p-2 rounded-md border border-gray-300 text-gray-800 hover:border-black transition"
+          >
+            {isDark ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
           {/* Log in Button with Shine */}
           <Link
             href="/login"

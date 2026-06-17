@@ -25,7 +25,7 @@ const UploadWitness = () => {
     if (!db) return;
     const postsRef = collection(db, "witnessPosts");
     const snapshot = await getDocs(postsRef);
-    setWitnessPosts(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    setWitnessPosts(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
   }, []);
 
   useEffect(() => {

@@ -1,16 +1,13 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import {
-  getFirestore,
   collection,
   onSnapshot,
   query,
   orderBy,
 } from "firebase/firestore";
-import { app } from "../../firebase";
+import { db } from "../../firebase";
 import { adminCreate, adminUpdate, adminDelete } from "../../lib/adminApi";
-
-const db = getFirestore(app);
 
 const UploadmeetShare = () => {
   const [form, setForm] = useState({
@@ -22,6 +19,8 @@ const UploadmeetShare = () => {
 
   // 🔁 Real-time fetch with ordering
   useEffect(() => {
+    if (!db) return; // Only run if db is initialized
+    
     const q = query(collection(db, "meetSessions"), orderBy("createdAt", "desc"));
     const unsub = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map((doc) => ({

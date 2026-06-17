@@ -20,13 +20,13 @@ const UploadWitness = () => {
   const [editingId, setEditingId] = useState(null);
   const { addToast } = useToast();
 
-  const postsRef = collection(db, "witnessPosts");
-
   // Fetch witness posts
   const fetchPosts = useCallback(async () => {
+    if (!db) return;
+    const postsRef = collection(db, "witnessPosts");
     const snapshot = await getDocs(postsRef);
-    setWitnessPosts(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-  }, [postsRef]);
+    setWitnessPosts(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  }, []);
 
   useEffect(() => {
     fetchPosts();

@@ -54,12 +54,13 @@ const UploadQuiz = () => {
   const [fetching, setFetching] = useState(true);
   const { addToast } = useToast();
 
-  const questionsRef = collection(db, "questions");
-
   // ─── Fetch questions ──────────────────────────────────────────────────────
   const fetchQuestions = useCallback(async () => {
+    if (!db) return; // Exit if db not initialized
+
     setFetching(true);
     try {
+      const questionsRef = collection(db, "questions");
       const snapshot = await getDocs(query(questionsRef, orderBy("createdAt", "desc")));
       setQuestions(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })));
     } catch (err) {
@@ -67,7 +68,7 @@ const UploadQuiz = () => {
     } finally {
       setFetching(false);
     }
-  }, [questionsRef]);
+  }, []);
 
   useEffect(() => { fetchQuestions(); }, [fetchQuestions]);
 
@@ -332,7 +333,7 @@ const UploadQuiz = () => {
               disabled={loading}
               className={`flex-1 py-3 font-semibold rounded-2xl transition text-lg disabled:opacity-50 ${
                 editingId
-                  ? "bg-yellow-400 hover:bg-yellow-500 text-gray-900"
+                  ? "bg-yellow-400 hover:bg-yellow-500 text-gray-90"
                   : "bg-indigo-600 hover:bg-indigo-700 text-white"
               }`}
             >

@@ -56,6 +56,8 @@ export default function UploadStories() {
   const [uploadProgress, setUploadProgress] = useState(0);
 
   useEffect(() => {
+    if (!db) return;
+    
     const q = query(collection(db, "stories"), orderBy("createdAt", "desc"));
     const unsub = onSnapshot(
       q,

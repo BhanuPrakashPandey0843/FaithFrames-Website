@@ -42,6 +42,8 @@ export default function DailyVerseAdminPanel() {
 
   // ─── Real-time listener ─────────────────────────────────────────────────
   useEffect(() => {
+    if (!db) return;
+    
     const unsub = onSnapshot(
       query(collection(db, "dailyVerses"), orderBy("createdAt", "desc")),
       (snapshot) => {

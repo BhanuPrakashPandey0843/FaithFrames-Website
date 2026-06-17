@@ -23,6 +23,8 @@ export default function UploadPrayers() {
 
   // ✅ Fetch daily prayers from Firestore
   useEffect(() => {
+    if (!db) return;
+    
     const unsub = onSnapshot(collection(db, "dailyPrayers"), (snapshot) => {
       setPrayers(
         snapshot.docs.map((doc) => ({

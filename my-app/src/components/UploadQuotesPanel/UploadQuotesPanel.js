@@ -39,6 +39,8 @@ export default function UploadQuotesPanel() {
 
   // ─── Real-time listener ─────────────────────────────────────────────────
   useEffect(() => {
+    if (!db) return;
+    
     const unsub = onSnapshot(
       query(collection(db, "quotes"), orderBy("createdAt", "desc")),
       (snapshot) => {

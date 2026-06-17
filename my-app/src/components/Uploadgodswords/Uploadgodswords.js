@@ -1,18 +1,14 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import {
-  getFirestore,
   collection,
   onSnapshot,
   query,
   orderBy,
 } from "firebase/firestore";
-import { app, hasValidFirebaseConfig } from "../../firebase";
+import { db } from "../../firebase";
 import { adminCreate, adminDelete } from "../../lib/adminApi";
 import { useToast } from "@/components/ui/Toast";
-
-// Only initialize db if config is valid
-const db = hasValidFirebaseConfig ? getFirestore(app) : null;
 
 const Uploadgodswords = () => {
   const [form, setForm] = useState({
@@ -89,7 +85,7 @@ const Uploadgodswords = () => {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6 md:p-12 font-sans">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-4xl md:text-5xl font-extrabold mb-8 text-indigo-800 text-center drop-shadow-sm">
-          Admin Panel – God&apos;s Words
+          Admin Panel – Study Plans
         </h1>
 
         {/* Form */}

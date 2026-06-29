@@ -6,7 +6,6 @@ import {
   ImageIcon,
   BookOpen,
   HelpCircle,
-  Quote,
   Users,
   Sparkles,
 } from "lucide-react";
@@ -27,7 +26,6 @@ const CONTENT_COLLECTIONS = [
   { key: "verses", label: "Daily Verses", icon: BookOpen, color: "bg-emerald-600 text-white" },
   { key: "prayers", label: "Daily Prayers", icon: BookOpen, color: "bg-teal-600 text-white" },
   { key: "questions", label: "Quiz Questions", icon: HelpCircle, color: "bg-orange-600 text-white" },
-  { key: "quotes", label: "Quotes", icon: Quote, color: "bg-violet-600 text-white" },
   { key: "users", label: "Registered Users", icon: Users, color: "bg-blue-600 text-white" },
 ];
 

@@ -38,14 +38,7 @@ export default function Navbar() {
     >
       <div className="max-w-7xl mx-auto flex justify-between items-center px-6 py-4">
         <Link href="/" className="flex items-center gap-3">
-          <Image
-            src="/Hero/Faith.png"
-            alt="Faith Frames logo"
-            width={40}
-            height={40}
-            className="rounded-lg object-cover"
-            priority
-          />
+          
           <motion.span
             whileHover={{ scale: 1.02 }}
             className="text-2xl font-bold tracking-tight bg-gradient-to-r from-black to-gray-700 bg-clip-text text-transparent"

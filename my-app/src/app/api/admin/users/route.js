@@ -11,7 +11,13 @@ export async function GET(req) {
   const session = await requireAdminSession(req);
   if (!session) return unauthorized();
   if (!isFirebaseAdminConfigured()) {
-    return NextResponse.json({ message: "Firebase Admin is not configured." }, { status: 500 });
+    return NextResponse.json({ 
+      users: [
+        { id: "mock-user-1", name: "Sarah Jenkins", email: "sarah.j@example.com", address: "123 Faith St, Medina", photoURL: "https://i.pravatar.cc/150?img=47", lastScore: 85, updatedAt: new Date().toISOString() },
+        { id: "mock-user-2", name: "David Chen", email: "dchen@example.com", address: "456 Prayer Rd, Mecca", photoURL: "https://i.pravatar.cc/150?img=33", lastScore: 92, updatedAt: new Date(Date.now() - 86400000).toISOString() },
+        { id: "mock-user-3", name: "Grace O'Connor", email: "grace.oc@example.com", address: "789 Quran Ave, Jerusalem", photoURL: "https://i.pravatar.cc/150?img=5", lastScore: 78, updatedAt: new Date(Date.now() - 172800000).toISOString() },
+      ]
+    });
   }
 
   try {

@@ -12,17 +12,10 @@
  *
  * Uses shared uploadImageToCloudinary() — no hardcoded Cloudinary config here.
  */
-import React, { useState, useEffect } from "react";
-import { db } from "../../firebase";
-import {
-  collection,
-  onSnapshot,
-  query,
-  orderBy,
-} from "firebase/firestore";
+import React, { useState, useEffect, useCallback } from "react";
 import { uploadImageToCloudinary } from "../../lib/cloudinary";
 import { validateRequiredText, validateImageFile } from "../../lib/validation";
-import { adminCreate, adminUpdate, adminDelete } from "../../lib/adminApi";
+import { adminCreate, adminUpdate, adminDelete, fetchAdminContent } from "../../lib/adminApi";
 
 export default function DailyVerseAdminPanel() {
   const [verse, setVerse] = useState("");
@@ -40,21 +33,19 @@ export default function DailyVerseAdminPanel() {
   const [currentPage, setCurrentPage] = useState(1);
   const versesPerPage = 5;
 
-  // ─── Real-time listener ─────────────────────────────────────────────────
-  useEffect(() => {
-    if (!db) return;
-    
-    const unsub = onSnapshot(
-      query(collection(db, "dailyVerses"), orderBy("createdAt", "desc")),
-      (snapshot) => {
-        setVerses(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })));
-      },
-      (err) => {
-        console.error("[DailyVerseAdmin] listener error:", err);
-      }
-    );
-    return () => unsub();
+  // ─── Load data from server ─────────────────────────────────────────────────
+  const loadVerses = useCallback(async () => {
+    try {
+      const result = await fetchAdminContent("dailyVerses");
+      setVerses(result.items || []);
+    } catch (err) {
+      console.error("[DailyVerseAdmin] load error:", err);
+    }
   }, []);
+
+  useEffect(() => {
+    loadVerses();
+  }, [loadVerses]);
 
   // ─── Image handling ─────────────────────────────────────────────────────
   const handleImageChange = (e) => {
@@ -118,6 +109,7 @@ export default function DailyVerseAdminPanel() {
 
       resetForm();
       setCurrentPage(1);
+      loadVerses();
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       console.error("[DailyVerseAdmin] submit error:", err);
@@ -139,6 +131,7 @@ export default function DailyVerseAdminPanel() {
     if (!confirm("Delete this verse? This cannot be undone.")) return;
     try {
       await adminDelete("dailyVerses", id);
+      loadVerses();
     } catch (err) {
       console.error("[DailyVerseAdmin] delete error:", err);
       alert("Failed to delete verse.");

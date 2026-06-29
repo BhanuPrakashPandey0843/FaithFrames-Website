@@ -5,27 +5,16 @@ import { validateImageFile, validateRequiredText } from "../../lib/validation";
 import { adminCreate } from "../../lib/adminApi";
 
 const UploadWallpaper = () => {
-  const [form, setForm] = useState({
-    title: "",
-    category: "",
-    country: "",
-    location: "",
-    rating: "",
-    reviews: "",
-  });
+  const [title, setTitle] = useState("");
   const [image, setImage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
 
   const handleUpload = async (e) => {
     e.preventDefault();
     setError("");
 
-    const titleCheck = validateRequiredText(form.title, 'Title', 120);
+    const titleCheck = validateRequiredText(title, "Title", 120);
     if (!titleCheck.ok) {
       setError(titleCheck.message);
       return;
@@ -44,21 +33,9 @@ const UploadWallpaper = () => {
       await adminCreate("religiousWallpapers", {
         uri: url,
         title: titleCheck.value,
-        category: form.category,
-        country: form.country.trim(),
-        location: form.location.trim(),
-        rating: form.rating || "0.0",
-        reviews: form.reviews || "0",
       });
 
-      setForm({
-        title: "",
-        category: "",
-        country: "",
-        location: "",
-        rating: "",
-        reviews: "",
-      });
+      setTitle("");
       setImage(null);
       alert("Wallpaper uploaded successfully");
     } catch (uploadError) {
@@ -73,7 +50,7 @@ const UploadWallpaper = () => {
     <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-50 p-6 md:p-12 font-sans">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-4xl md:text-5xl font-bold mb-8 text-gray-900 text-center">
-           Upload Religious Wallpaper
+          Upload Religious Wallpaper
         </h1>
 
         <form
@@ -82,71 +59,13 @@ const UploadWallpaper = () => {
         >
           <input
             type="text"
-            name="title"
             placeholder="Enter Wallpaper Title"
-            value={form.title}
-            onChange={handleChange}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
             className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none text-gray-800 font-medium"
             required
             maxLength={120}
           />
-
-          <select
-            name="category"
-            value={form.category}
-            onChange={handleChange}
-            className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-purple-400 focus:outline-none text-gray-800 font-medium"
-            required
-          >
-            <option value="">Select Category</option>
-            <option value="Hindu">Hindu</option>
-            <option value="Islamic">Islamic</option>
-            <option value="Christian">Christian</option>
-            <option value="Sikh">Sikh</option>
-            <option value="Buddhist">Buddhist</option>
-          </select>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input
-              type="text"
-              name="country"
-              placeholder="Enter Country"
-              value={form.country}
-              onChange={handleChange}
-              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none text-gray-700"
-            />
-            <input
-              type="text"
-              name="location"
-              placeholder="Enter Location"
-              value={form.location}
-              onChange={handleChange}
-              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none text-gray-700"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input
-              type="number"
-              step="0.1"
-              min="0"
-              max="5"
-              name="rating"
-              placeholder="Rating (e.g., 4.5)"
-              value={form.rating}
-              onChange={handleChange}
-              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-400 focus:outline-none text-gray-700"
-            />
-            <input
-              type="number"
-              min="0"
-              name="reviews"
-              placeholder="Reviews (e.g., 120)"
-              value={form.reviews}
-              onChange={handleChange}
-              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-yellow-400 focus:outline-none text-gray-700"
-            />
-          </div>
 
           <input
             type="file"

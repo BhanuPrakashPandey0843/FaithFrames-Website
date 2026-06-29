@@ -1,13 +1,13 @@
 "use client";
 /**
- * UploadStories.js  — Regular Stories module
- * ──────────────────────────────────────────
- * Firestore collection : "stories"
- * Cloudinary path      : faithframes/stories
+ * UploadFeaturedStory.js  — Featured Stories module
+ * ────────────────────────────────────────────────
+ * Firestore collection : "featuredStories"
+ * Cloudinary path      : faithframes/featured-stories
  *
- * This component manages REGULAR (non-featured) prophet stories only.
- * Featured stories have their own independent module:
- *   → /admin/uploads/upload-featured-story  (UploadFeaturedStory.js)
+ * This component manages FEATURED prophet stories only.
+ * Regular stories have their own independent module:
+ *   → /admin/uploads/upload-stories  (UploadStories.js)
  *
  * Schema stored in Firestore:
  *   title           : string
@@ -28,12 +28,12 @@ import { adminCreate, adminUpdate, adminDelete, fetchAdminContent } from "../../
 import { useToast } from "@/components/ui/Toast";
 import { useStoryUpload } from "@/hooks/useStoryUpload";
 import { StoryDropzone } from "@/components/shared/StoryDropzone";
-import { STORY_CLOUDINARY_FOLDER } from "@/lib/adminCollections";
+import { FEATURED_STORY_CLOUDINARY_FOLDER } from "@/lib/adminCollections";
 import { motion, AnimatePresence } from "framer-motion";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const FIRESTORE_COLLECTION = "stories";
+const FIRESTORE_COLLECTION = "featuredStories";
 
 const STATUS_FILTERS = [
   { id: "all",         label: "All" },
@@ -74,7 +74,7 @@ function Spinner({ className = "w-4 h-4" }) {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function UploadStories() {
+export default function UploadFeaturedStory() {
   const { addToast } = useToast();
   const {
     imageFile,
@@ -105,7 +105,7 @@ export default function UploadStories() {
       const result = await fetchAdminContent(FIRESTORE_COLLECTION);
       setStories(result.items || []);
     } catch (err) {
-      console.error("[UploadStories] load error:", err);
+      console.error("[UploadFeaturedStory] load error:", err);
     } finally {
       setFetching(false);
     }
@@ -161,7 +161,7 @@ export default function UploadStories() {
       if (imageFile) {
         const imageCheck = validateImageFile(imageFile);
         if (!imageCheck.ok) throw new Error(imageCheck.message);
-        coverimage = await uploadImageToCloudinary(imageFile, STORY_CLOUDINARY_FOLDER);
+        coverimage = await uploadImageToCloudinary(imageFile, FEATURED_STORY_CLOUDINARY_FOLDER);
       }
 
       const payload = {
@@ -177,19 +177,19 @@ export default function UploadStories() {
 
       if (editId) {
         await adminUpdate(FIRESTORE_COLLECTION, editId, payload);
-        addToast({ type: "success", message: "Story updated successfully." });
+        addToast({ type: "success", message: "Featured story updated successfully." });
         setEditId(null);
       } else {
         await adminCreate(FIRESTORE_COLLECTION, payload);
-        addToast({ type: "success", message: "Story created successfully." });
+        addToast({ type: "success", message: "Featured story created successfully." });
       }
 
       resetForm();
       setShowForm(false);
       loadStories();
     } catch (err) {
-      console.error("[UploadStories] submit error:", err);
-      const msg = err?.message || "Failed to save story. Please try again.";
+      console.error("[UploadFeaturedStory] submit error:", err);
+      const msg = err?.message || "Failed to save featured story. Please try again.";
       setError(msg);
       addToast({ type: "error", message: msg });
     } finally {
@@ -199,15 +199,15 @@ export default function UploadStories() {
 
   // ─── Delete ────────────────────────────────────────────────────────────────
   const handleDelete = async (id) => {
-    if (!confirm("Delete this story? This action cannot be undone.")) return;
+    if (!confirm("Delete this featured story? This action cannot be undone.")) return;
     try {
       await adminDelete(FIRESTORE_COLLECTION, id);
-      addToast({ type: "success", message: "Story deleted." });
+      addToast({ type: "success", message: "Featured story deleted." });
       if (viewStory?.id === id) setViewStory(null);
       loadStories();
     } catch (err) {
-      console.error("[UploadStories] delete error:", err);
-      addToast({ type: "error", message: err?.message || "Failed to delete story." });
+      console.error("[UploadFeaturedStory] delete error:", err);
+      addToast({ type: "error", message: err?.message || "Failed to delete featured story." });
     }
   };
 
@@ -215,7 +215,7 @@ export default function UploadStories() {
   const handleTogglePublished = async (story) => {
     try {
       await adminUpdate(FIRESTORE_COLLECTION, story.id, { published: !story.published });
-      addToast({ type: "success", message: `Story ${story.published ? "unpublished" : "published"}.` });
+      addToast({ type: "success", message: `Featured story ${story.published ? "unpublished" : "published"}` });
       loadStories();
     } catch (err) {
       addToast({ type: "error", message: "Failed to update published status." });
@@ -237,20 +237,20 @@ export default function UploadStories() {
 
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 p-4 md:p-8 font-sans">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-amber-50/20 p-4 md:p-8 font-sans">
       <div className="max-w-7xl mx-auto space-y-8">
 
         {/* ── Page Header ────────────────────────────────────────────────── */}
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-widest text-indigo-500 font-semibold mb-1">
-              Regular Stories
+            <p className="text-xs uppercase tracking-widest text-amber-500 font-semibold mb-1">
+              Featured Stories
             </p>
             <h1 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">
-              Prophet Stories
+              Featured Prophet Stories
             </h1>
             <p className="text-sm text-slate-400 mt-1">
-              Manage regular prophet stories · {stories.length} total
+              Manage featured prophet stories · {stories.length} total
             </p>
           </div>
           <div className="flex gap-3">
@@ -259,7 +259,7 @@ export default function UploadStories() {
                 if (showForm) { resetForm(); }
                 setShowForm((o) => !o);
               }}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold shadow-sm transition"
             >
               {showForm ? "✕  Hide Form" : editId ? "✏️  Edit Story" : "➕  Add Story"}
             </button>
@@ -305,13 +305,13 @@ export default function UploadStories() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by title, prophet name…"
-            className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+            className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition"
           />
           <div className="relative">
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="appearance-none pl-3.5 pr-9 py-2.5 border border-gray-200 rounded-xl bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 cursor-pointer transition"
+              className="appearance-none pl-3.5 pr-9 py-2.5 border border-gray-200 rounded-xl bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-400 cursor-pointer transition"
             >
               {STATUS_FILTERS.map((f) => (
                 <option key={f.id} value={f.id}>{f.label}</option>
@@ -336,9 +336,9 @@ export default function UploadStories() {
               className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden"
             >
               {/* Form header */}
-              <div className={`px-6 py-4 border-b border-gray-100 ${editId ? "bg-amber-50" : "bg-indigo-50/50"}`}>
+              <div className={`px-6 py-4 border-b border-gray-100 ${editId ? "bg-amber-50" : "bg-amber-50/30"}`}>
                 <h2 className="text-base font-bold text-slate-900">
-                  {editId ? "✏️  Edit Prophet Story" : "➕  Add New Prophet Story"}
+                  {editId ? "✏️  Edit Featured Story" : "➕  Add New Featured Story"}
                 </h2>
                 {editId && (
                   <p className="text-xs text-amber-700 mt-0.5">
@@ -349,7 +349,7 @@ export default function UploadStories() {
                 {uploadProgress > 0 && (
                   <div className="mt-3 w-full rounded-full bg-slate-200 overflow-hidden h-1.5">
                     <div
-                      className="h-full bg-indigo-500 transition-all duration-200"
+                      className="h-full bg-amber-500 transition-all duration-200"
                       style={{ width: `${uploadProgress}%` }}
                     />
                   </div>
@@ -367,7 +367,7 @@ export default function UploadStories() {
                       value={form.title}
                       onChange={(e) => setForm({ ...form, title: e.target.value })}
                       placeholder="The Story of Prophet Musa (AS)"
-                      className="w-full px-3.5 py-3 border border-gray-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                      className="w-full px-3.5 py-3 border border-gray-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition"
                       maxLength={140}
                     />
                     <p className="text-[11px] text-gray-400 mt-1 text-right">{form.title.length}/140</p>
@@ -380,7 +380,7 @@ export default function UploadStories() {
                       value={form.prophetName}
                       onChange={(e) => setForm({ ...form, prophetName: e.target.value })}
                       placeholder="Musa (AS)"
-                      className="w-full px-3.5 py-3 border border-gray-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                      className="w-full px-3.5 py-3 border border-gray-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition"
                       maxLength={80}
                     />
                   </div>
@@ -396,7 +396,7 @@ export default function UploadStories() {
                       value={form.readingtime}
                       onChange={(e) => setForm({ ...form, readingtime: e.target.value })}
                       placeholder="5 min read"
-                      className="w-full px-3.5 py-3 border border-gray-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                      className="w-full px-3.5 py-3 border border-gray-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition"
                       maxLength={40}
                     />
                   </div>
@@ -408,7 +408,7 @@ export default function UploadStories() {
                       value={form.shortdescription}
                       onChange={(e) => setForm({ ...form, shortdescription: e.target.value })}
                       placeholder="A brief summary of the prophet's journey…"
-                      className="w-full px-3.5 py-3 border border-gray-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 min-h-[88px] resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                      className="w-full px-3.5 py-3 border border-gray-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 min-h-[88px] resize-none focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition"
                       maxLength={180}
                     />
                     <p className="text-[11px] text-gray-400 mt-1 text-right">{form.shortdescription.length}/180</p>
@@ -424,7 +424,7 @@ export default function UploadStories() {
                     value={form.fullstory}
                     onChange={(e) => setForm({ ...form, fullstory: e.target.value })}
                     placeholder="Write the complete story content here…"
-                    className="w-full px-3.5 py-3 border border-gray-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 min-h-[200px] resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                    className="w-full px-3.5 py-3 border border-gray-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 min-h-[200px] resize-none focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition"
                   />
                   <p className="text-[11px] text-gray-400 mt-1 text-right">{form.fullstory.length} chars</p>
                 </div>
@@ -444,7 +444,7 @@ export default function UploadStories() {
                   <div
                     onClick={() => setForm({ ...form, published: !form.published })}
                     className={`relative w-10 h-6 rounded-full transition-colors ${
-                      form.published ? "bg-indigo-500" : "bg-gray-300"
+                      form.published ? "bg-amber-500" : "bg-gray-300"
                     }`}
                   >
                     <span
@@ -466,7 +466,7 @@ export default function UploadStories() {
                     className={`flex-1 py-3 rounded-xl text-sm font-semibold transition flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed ${
                       editId
                         ? "bg-amber-400 hover:bg-amber-500 text-gray-900"
-                        : "bg-indigo-600 hover:bg-indigo-700 text-white"
+                        : "bg-amber-500 hover:bg-amber-600 text-white"
                     }`}
                   >
                     {loading ? <><Spinner /> Saving…</> : editId ? "Update Story" : "Create Story"}
@@ -490,7 +490,7 @@ export default function UploadStories() {
         <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
             <h2 className="font-bold text-slate-900">
-              Stories Table
+              Featured Stories Table
               <span className="ml-2 text-sm font-normal text-slate-400">
                 {fetching ? "loading…" : `${filteredStories.length} of ${stories.length}`}
               </span>
@@ -499,12 +499,12 @@ export default function UploadStories() {
 
           {fetching ? (
             <div className="flex flex-col items-center gap-3 py-16 text-gray-400">
-              <Spinner className="w-6 h-6 text-indigo-400" />
-              <p className="text-sm">Loading stories…</p>
+              <Spinner className="w-6 h-6 text-amber-400" />
+              <p className="text-sm">Loading featured stories…</p>
             </div>
           ) : filteredStories.length === 0 ? (
             <div className="text-center py-16 text-slate-400 text-sm">
-              No stories match your search or filter.
+              No featured stories match your search or filter.
             </div>
           ) : (
             <>
@@ -544,7 +544,7 @@ export default function UploadStories() {
                         <td className="px-4 py-4">
                           <span className={`inline-flex px-2.5 py-1 rounded-full text-[11px] font-semibold ${
                             story.published
-                              ? "bg-indigo-100 text-indigo-700"
+                              ? "bg-amber-100 text-amber-700"
                               : "bg-rose-100 text-rose-700"
                           }`}>
                             {story.published ? "Live" : "Draft"}
@@ -615,7 +615,7 @@ export default function UploadStories() {
                       <span>Created: {formatDate(story.createdAt)}</span>
                       <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
                         story.published
-                          ? "bg-indigo-100 text-indigo-700"
+                          ? "bg-amber-100 text-amber-700"
                           : "bg-rose-100 text-rose-700"
                       }`}>
                         {story.published ? "Live" : "Draft"}
@@ -667,7 +667,7 @@ export default function UploadStories() {
             >
               <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                 <div>
-                  <h2 className="font-bold text-slate-900">Story Preview</h2>
+                  <h2 className="font-bold text-slate-900">Featured Story Preview</h2>
                   <p className="text-xs text-slate-400 mt-0.5">Read-only view of the selected story.</p>
                 </div>
                 <button
@@ -701,7 +701,7 @@ export default function UploadStories() {
                         🕐 {viewStory.readingtime}
                       </span>
                       <span className={`px-3 py-1.5 rounded-full text-xs font-semibold ${
-                        viewStory.published ? "bg-indigo-100 text-indigo-700" : "bg-rose-100 text-rose-700"
+                        viewStory.published ? "bg-amber-100 text-amber-700" : "bg-rose-100 text-rose-700"
                       }`}>
                         {viewStory.published ? "Published" : "Draft"}
                       </span>

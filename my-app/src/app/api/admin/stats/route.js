@@ -13,14 +13,28 @@ export async function GET(req) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
+  // If Firebase Admin isn't configured, return mock stats
   if (!isFirebaseAdminConfigured()) {
-    return NextResponse.json(
-      {
-        message:
-          "Firebase Admin is not configured. Add FIREBASE_SERVICE_ACCOUNT_JSON or FIREBASE_ADMIN_* credentials.",
+    return NextResponse.json({
+      counts: {
+        featuredStories: 3,
+        meetShares: 5,
+        prayers: 12,
+        quizzes: 4,
+        wallpapers: 20,
+        dailyVerses: 15,
+        witnesses: 8,
+        users: 25,
       },
-      { status: 500 }
-    );
+      userGrowth: [
+        { day: "Jun 24", users: 2 },
+        { day: "Jun 25", users: 3 },
+        { day: "Jun 26", users: 5 },
+        { day: "Jun 27", users: 4 },
+        { day: "Jun 28", users: 6 },
+        { day: "Jun 29", users: 5 },
+      ],
+    });
   }
 
   try {

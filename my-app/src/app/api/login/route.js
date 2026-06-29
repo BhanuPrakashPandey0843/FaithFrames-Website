@@ -45,6 +45,13 @@ function credentialsConfigured() {
 async function tryEnvAdminLogin(email, password) {
   const adminEmail = process.env.ADMIN_EMAIL?.trim()?.toLowerCase();
   const adminPassword = process.env.ADMIN_PASSWORD?.trim();
+  console.log("\n[DEBUG] tryEnvAdminLogin");
+  console.log("  Input email:", JSON.stringify(email));
+  console.log("  Expected email:", JSON.stringify(adminEmail));
+  console.log("  Input password:", JSON.stringify(password));
+  console.log("  Expected password:", JSON.stringify(adminPassword));
+  console.log("  Email match?", email === adminEmail);
+  console.log("  Password match?", password === adminPassword);
   if (!adminEmail || !adminPassword) return false;
   return email === adminEmail && password === adminPassword;
 }
@@ -75,6 +82,11 @@ export async function POST(req) {
     const normalizedEmail = String(email ?? "").trim().toLowerCase();
     const normalizedPassword = String(password ?? "").trim();
 
+    console.log("[DEBUG] Login attempt received");
+    console.log("[DEBUG] Input email:", email);
+    console.log("[DEBUG] Normalized email:", normalizedEmail);
+    console.log("[DEBUG] Input password length:", password?.length);
+
     if (!normalizedEmail || !normalizedPassword) {
       return NextResponse.json(
         { success: false, message: "Email and password are required." },
@@ -83,13 +95,17 @@ export async function POST(req) {
     }
 
     if (!process.env.ADMIN_SESSION_SECRET?.trim()) {
+      console.error("[DEBUG] ADMIN_SESSION_SECRET not configured");
       return NextResponse.json(
         { success: false, message: "Session secret is not configured on the server." },
         { status: 500 }
       );
     }
 
-    if (!credentialsConfigured()) {
+    const credentialsOk = credentialsConfigured();
+    console.log("[DEBUG] credentialsConfigured():", credentialsOk);
+
+    if (!credentialsOk) {
       return NextResponse.json(
         {
           success: false,
@@ -102,13 +118,18 @@ export async function POST(req) {
 
     let sessionEmail = null;
 
-    if (await tryEnvAdminLogin(normalizedEmail, normalizedPassword)) {
+    const envLoginResult = await tryEnvAdminLogin(normalizedEmail, normalizedPassword);
+    console.log("[DEBUG] tryEnvAdminLogin result:", envLoginResult);
+    
+    if (envLoginResult) {
       sessionEmail = normalizedEmail;
     } else {
+      console.log("[DEBUG] Trying Firebase admin login...");
       const firebaseResult = await tryFirebaseAdminLogin(
         normalizedEmail,
         normalizedPassword
       );
+      console.log("[DEBUG] tryFirebaseAdminLogin result:", firebaseResult);
 
       if (firebaseResult.ok) {
         sessionEmail = firebaseResult.email?.toLowerCase() ?? normalizedEmail;

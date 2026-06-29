@@ -1,13 +1,6 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import {
-  collection,
-  onSnapshot,
-  query,
-  orderBy,
-} from "firebase/firestore";
-import { db } from "../../firebase";
-import { adminCreate, adminUpdate, adminDelete } from "../../lib/adminApi";
+import React, { useState, useEffect, useCallback } from "react";
+import { adminCreate, adminUpdate, adminDelete, fetchAdminContent } from "../../lib/adminApi";
 
 const UploadmeetShare = () => {
   const [form, setForm] = useState({
@@ -17,21 +10,19 @@ const UploadmeetShare = () => {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // 🔁 Real-time fetch with ordering
-  useEffect(() => {
-    if (!db) return; // Only run if db is initialized
-    
-    const q = query(collection(db, "meetSessions"), orderBy("createdAt", "desc"));
-    const unsub = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setSessions(data);
-    });
-
-    return () => unsub();
+  // Load data from server
+  const loadSessions = useCallback(async () => {
+    try {
+      const result = await fetchAdminContent("meetSessions");
+      setSessions(result.items || []);
+    } catch (err) {
+      console.error("[UploadmeetShare] load error:", err);
+    }
   }, []);
+
+  useEffect(() => {
+    loadSessions();
+  }, [loadSessions]);
 
   // 🧠 Handle input changes
   const handleChange = (e) => {
@@ -54,6 +45,7 @@ const UploadmeetShare = () => {
       });
       alert("✅ Meet session added");
       setForm({ message: "", meetLink: "" });
+      loadSessions();
     } catch (error) {
       console.error(error);
       alert("❌ Error adding session");
@@ -67,6 +59,7 @@ const UploadmeetShare = () => {
     try {
       await adminDelete("meetSessions", id);
       alert("🗑️ Session deleted");
+      loadSessions();
     } catch (error) {
       console.error(error);
       alert("❌ Error deleting session");
@@ -81,6 +74,7 @@ const UploadmeetShare = () => {
       await adminUpdate("meetSessions", id, {
         [type]: (session[type] || 0) + 1,
       });
+      loadSessions();
     } catch (error) {
       console.error("Error updating likes/dislikes:", error);
     }

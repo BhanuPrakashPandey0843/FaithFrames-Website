@@ -1,0 +1,130 @@
+rules_version = '2';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FaithFrames Firestore Security Rules
+// Project : wallpaper-c74a3
+//
+// Architecture overview
+// ─────────────────────
+// • Admin writes  → Next.js API routes (/api/admin/*) using the Admin SDK.
+//                   Admin SDK calls bypass these rules entirely.
+// • Admin reads   → Next.js API routes (/api/admin/collection/*) – also Admin SDK.
+//                   Client-side components fetch from the API, NOT directly from
+//                   Firestore, so no client-SDK admin reads are needed.
+// • Mobile / public reads → Firebase client SDK with Firebase Auth.
+//                   Only authenticated app users read content collections.
+// • Public (unauthenticated) reads → denied for all collections.
+//
+// Rule summary
+// ────────────
+// religiousWallpapers  : authenticated read   | no client write
+// dailyVerses          : authenticated read   | no client write
+// dailyPrayers         : authenticated read   | no client write
+// questions            : authenticated read   | no client write
+// stories              : authenticated read   | no client write
+// featuredStories      : authenticated read   | no client write
+// witnessPosts         : authenticated read   | no client write
+// meetSessions         : authenticated read   | no client write
+// users                : owner read/write     | no other client access
+// premiumUsers         : owner read           | no client write
+// ─────────────────────────────────────────────────────────────────────────────
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper functions ────────────────────────────────────────────────────
+
+    // True when the caller has a valid Firebase Auth token
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // True when the caller's uid matches the document owner field
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // ── Public / app content collections ───────────────────────────────────
+    // Mobile app users (authenticated) can read these.
+    // All writes come exclusively through the Admin SDK (API routes) —
+    // client writes are therefore denied here.
+
+    // Religious wallpapers shown in the mobile app
+    match /religiousWallpapers/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Admin SDK only
+    }
+
+    // Daily verse of the day
+    match /dailyVerses/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Admin SDK only
+    }
+
+    // Daily prayers
+    match /dailyPrayers/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Admin SDK only
+    }
+
+    // Quiz questions
+    match /questions/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Admin SDK only
+    }
+
+    // Regular prophet stories
+    match /stories/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Admin SDK only
+    }
+
+    // Featured prophet stories (separate collection from regular stories)
+    match /featuredStories/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Admin SDK only
+    }
+
+    // Witness / testimony posts
+    match /witnessPosts/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Admin SDK only
+    }
+
+    // Meet & share sessions
+    match /meetSessions/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Admin SDK only
+    }
+
+    // God's words / quotes collection
+    match /godsWords/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Admin SDK only
+    }
+
+    // ── User profile collection ─────────────────────────────────────────────
+    // Each user may read and update only their own document.
+    // Admins read all user documents via the Admin SDK (stats, premium-users API).
+    match /users/{userId} {
+      allow read:   if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow delete: if false; // only Admin SDK may delete user records
+    }
+
+    // ── Premium users / subscriptions ──────────────────────────────────────
+    // The mobile app may read the calling user's own premium record.
+    // The admin panel reads all records via the Admin SDK (API route).
+    match /premiumUsers/{userId} {
+      allow read:  if isOwner(userId);
+      allow write: if false; // Admin SDK only (set by payment webhooks)
+    }
+
+    // ── Deny everything else ───────────────────────────────────────────────
+    // Explicit catch-all: any collection not listed above is locked.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

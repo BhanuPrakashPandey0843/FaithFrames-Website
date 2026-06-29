@@ -6,7 +6,6 @@ import {
   LayoutDashboard,
   Image as WallpaperIcon,
   FileQuestion,
-  Quote,
   ClipboardList,
   LogOut,
   User,
@@ -14,23 +13,24 @@ import {
   ChevronRight,
   MessageCircle,
   Video,
+  Star,
+  Crown,
 } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 const menuItems = [
   { name: "Dashboard", icon: LayoutDashboard, path: "/admin" },
   { name: "Upload Wallpaper", icon: WallpaperIcon, path: "/admin/uploads/upload-wallpaper" },
-  { name: "Upload Quote", icon: Quote, path: "/admin/uploads/upload-quote" },
   { name: "Upload Quiz Question", icon: FileQuestion, path: "/admin/uploads/upload-quiz" },
   { name: "Upload Daily Verse", icon: ClipboardList, path: "/admin/uploads/upload-verse" },
   { name: "Upload Daily Prayer", icon: ClipboardList, path: "/admin/uploads/upload-prayers" },
   { name: "Upload Witness", icon: MessageCircle, path: "/admin/uploads/upload-witness" },
-  { name: "Upload God's Words", icon: BookOpen, path: "/admin/uploads/upload-godswords" },
   { name: "Upload Meet-Share", icon: Video, path: "/admin/uploads/upload-meetShare" },
-  { name: "Upload Stories", icon: Video, path: "/admin/uploads/upload-stories" },
+  { name: "Upload Stories", icon: BookOpen, path: "/admin/uploads/upload-stories" },
+  { name: "Upload Featured Story", icon: Star, path: "/admin/uploads/upload-featured-story" },
+  { name: "Premium Users", icon: Crown, path: "/admin/premium-users" },
   { name: "Profile", icon: User, path: "/admin/uploads/profile" },
 ];
 
@@ -53,7 +53,7 @@ export default function Sidebar() {
     try {
       await fetch("/api/logout", { method: "POST" });
     } catch {
-      // ignore network errors — redirect regardless
+      // ignore — redirect regardless
     } finally {
       router.replace("/login");
     }
@@ -68,31 +68,13 @@ export default function Sidebar() {
         isOpen ? "w-64" : "w-20"
       } bg-white shadow-xl border-r border-gray-200 text-gray-800 flex flex-col justify-between z-50 transition-all duration-300`}
     >
-      {/* Header */}
+      {/* Toggle Button Row */}
       <div className="flex-1 overflow-y-auto">
-        <div className="flex items-center justify-between px-4 py-5 border-b border-gray-200">
-          {isOpen && (
-            <Link href="/admin" className="flex items-center gap-2">
-              <Image
-                src="/Hero/Faith.png"
-                alt="Faith Frames"
-                width={32}
-                height={32}
-                className="rounded-md object-cover"
-              />
-              <motion.h2
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-lg font-bold tracking-wide text-[#558AFF]"
-              >
-                Faith Admin
-              </motion.h2>
-            </Link>
-          )}
+        <div className="flex items-center justify-end px-4 py-4 border-b border-gray-200">
           <button
             onClick={() => setIsOpen((o) => !o)}
             aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
-            className="p-2 rounded-lg hover:bg-gray-100 transition ml-auto"
+            className="p-2 rounded-lg hover:bg-gray-100 transition"
           >
             {isOpen ? (
               <ChevronLeft className="w-5 h-5 text-gray-600" />
@@ -103,7 +85,7 @@ export default function Sidebar() {
         </div>
 
         {/* Nav Items */}
-        <ul className="mt-4 space-y-1 px-3">
+        <ul className="mt-3 space-y-1 px-3">
           {menuItems.map((item) => {
             const isActive = pathname === item.path;
             return (

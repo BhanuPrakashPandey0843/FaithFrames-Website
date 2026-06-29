@@ -1,12 +1,7 @@
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
-import { db } from "../../firebase";
-import {
-  collection,
-  getDocs,
-} from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
-import { adminCreate, adminUpdate, adminDelete } from "../../lib/adminApi";
+import { adminCreate, adminUpdate, adminDelete, fetchAdminContent } from "../../lib/adminApi";
 import { useToast } from "@/components/ui/Toast";
 
 const UploadWitness = () => {
@@ -22,10 +17,12 @@ const UploadWitness = () => {
 
   // Fetch witness posts
   const fetchPosts = useCallback(async () => {
-    if (!db) return;
-    const postsRef = collection(db, "witnessPosts");
-    const snapshot = await getDocs(postsRef);
-    setWitnessPosts(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+    try {
+      const result = await fetchAdminContent("witnessPosts");
+      setWitnessPosts(result.items || []);
+    } catch (err) {
+      console.error("[UploadWitness] fetch error:", err);
+    }
   }, []);
 
   useEffect(() => {

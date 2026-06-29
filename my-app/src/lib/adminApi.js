@@ -6,6 +6,13 @@ async function parseResponse(res) {
   return json;
 }
 
+export async function fetchAdminContent(collection) {
+  const res = await fetch(`/api/admin/content?collection=${encodeURIComponent(collection)}`, { 
+    cache: "no-store" 
+  });
+  return parseResponse(res);
+}
+
 export async function adminCreate(collection, data) {
   const res = await fetch("/api/admin/content", {
     method: "POST",

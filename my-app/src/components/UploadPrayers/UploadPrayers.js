@@ -1,12 +1,7 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { db } from "../../firebase";
-import {
-  collection,
-  onSnapshot,
-} from "firebase/firestore";
+import React, { useState, useEffect, useCallback } from "react";
 import { uploadImageToCloudinary } from "../../lib/cloudinary";
-import { adminCreate, adminUpdate, adminDelete } from "../../lib/adminApi";
+import { adminCreate, adminUpdate, adminDelete, fetchAdminContent } from "../../lib/adminApi";
 
 export default function UploadPrayers() {
   const [verse, setVerse] = useState("");
@@ -21,20 +16,19 @@ export default function UploadPrayers() {
   const [currentPage, setCurrentPage] = useState(1);
   const prayersPerPage = 5;
 
-  // ✅ Fetch daily prayers from Firestore
-  useEffect(() => {
-    if (!db) return;
-    
-    const unsub = onSnapshot(collection(db, "dailyPrayers"), (snapshot) => {
-      setPrayers(
-        snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }))
-      );
-    });
-    return () => unsub();
+  // Load daily prayers from server
+  const loadPrayers = useCallback(async () => {
+    try {
+      const result = await fetchAdminContent("dailyPrayers");
+      setPrayers(result.items || []);
+    } catch (err) {
+      console.error("[UploadPrayers] load error:", err);
+    }
   }, []);
+
+  useEffect(() => {
+    loadPrayers();
+  }, [loadPrayers]);
 
   // ✅ Handle form submission
   const handleSubmit = async (e) => {
@@ -66,6 +60,7 @@ export default function UploadPrayers() {
         });
       }
       resetForm();
+      loadPrayers();
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (error) {
       console.error("Error:", error);
@@ -88,6 +83,7 @@ export default function UploadPrayers() {
     if (!confirm("Are you sure you want to delete this prayer?")) return;
     try {
       await adminDelete("dailyPrayers", id);
+      loadPrayers();
     } catch (error) {
       console.error("Delete error:", error);
       alert("Failed to delete.");

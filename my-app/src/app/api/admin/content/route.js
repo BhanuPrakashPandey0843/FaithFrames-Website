@@ -14,24 +14,28 @@ const MOCK_DATA = {
     { id: "mock-story-3", title: "The Journey of Hijra", name: "Prophet Muhammad (SAW)", shortdescription: "The migration that changed history.", fullstory: "In the year 622 CE...", readingtime: "6 min read", published: true, author: "admin", createdAt: new Date(Date.now() - 172800000).toISOString(), coverimage: "" },
   ],
   questions: [
-    { id: "mock-question-1", question: "What is the first pillar of Islam?", options: ["Shahada", "Salah", "Zakat", "Sawm"], correctIndex: 0, category: "Basics", difficulty: "easy", active: true },
-    { id: "mock-question-2", question: "How many times a day do Muslims pray?", options: ["3", "4", "5", "6"], correctIndex: 2, category: "Basics", difficulty: "easy", active: true },
+    { id: "mock-question-1", question: "What is the first pillar of Islam?", options: ["Shahada", "Salah", "Zakat", "Sawm"], correctIndex: 0, category: "Daily Challenges", difficulty: "easy", active: true },
+    { id: "mock-question-2", question: "How many times a day do Muslims pray?", options: ["3", "4", "5", "6"], correctIndex: 2, category: "Daily Challenges", difficulty: "easy", active: true },
   ],
   religiousWallpapers: [
-    { id: "mock-wallpaper-1", title: "Quran Verse", url: "https://picsum.photos/400/300?random=1", uploadedAt: new Date().toISOString() },
-    { id: "mock-wallpaper-2", title: "Kaaba", url: "https://picsum.photos/400/300?random=2", uploadedAt: new Date(Date.now() - 86400000).toISOString() },
+    { id: "mock-wallpaper-1", title: "Quran Verse", uri: "https://picsum.photos/400/300?random=1", uploadedAt: new Date().toISOString() },
+    { id: "mock-wallpaper-2", title: "Kaaba", uri: "https://picsum.photos/400/300?random=2", uploadedAt: new Date(Date.now() - 86400000).toISOString() },
   ],
-  prayers: [
-    { id: "mock-prayer-1", title: "Morning Du'a", content: "O Allah, bless this day...", category: "Daily", published: true, createdAt: new Date().toISOString() },
+  dailyPrayers: [
+    { id: "mock-prayer-1", verse: "O Allah, bless this day...", reference: "Morning Du'a", bgurl: "", createdAt: new Date().toISOString() },
+    { id: "mock-prayer-2", verse: "In the name of Allah, the Most Gracious, the Most Merciful.", reference: "Opening", bgurl: "", createdAt: new Date(Date.now() - 86400000).toISOString() },
   ],
-  witness: [
-    { id: "mock-witness-1", name: "Fatima", testimony: "This app has truly changed my life...", published: true, createdAt: new Date().toISOString() },
+  witnessPosts: [
+    { id: "mock-witness-1", name: "Fatima", testimony: "This app has truly changed my life...", createdAt: new Date().toISOString() },
+    { id: "mock-witness-2", name: "Ali", testimony: "Faith Frames keeps me grounded daily.", createdAt: new Date(Date.now() - 172800000).toISOString() },
   ],
-  meetShare: [
-    { id: "mock-meet-1", title: "Weekly Study Circle", date: new Date(Date.now() + 86400000).toISOString(), description: "Join us for Quran study", location: "Online", published: true, createdAt: new Date().toISOString() },
+  meetSessions: [
+    { id: "mock-meet-1", message: "Weekly Study Circle", meetLink: "https://meet.google.com/abc-defg-hij", likes: 5, dislikes: 0, createdAt: new Date().toISOString() },
+    { id: "mock-meet-2", message: "Quran Recitation", meetLink: "https://meet.google.com/xyz-1234-567", likes: 12, dislikes: 1, createdAt: new Date(Date.now() - 86400000).toISOString() },
   ],
   dailyVerses: [
-    { id: "mock-verse-1", verse: "And He is with you wherever you are.", reference: "Quran 57:4", date: new Date().toISOString(), active: true },
+    { id: "mock-verse-1", verse: "And He is with you wherever you are.", reference: "Quran 57:4", bgurl: "", createdAt: new Date().toISOString() },
+    { id: "mock-verse-2", verse: "Verily, with hardship comes ease.", reference: "Quran 94:6", bgurl: "", createdAt: new Date(Date.now() - 86400000).toISOString() },
   ],
 };
 

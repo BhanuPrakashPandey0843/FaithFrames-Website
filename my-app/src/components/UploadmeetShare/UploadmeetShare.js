@@ -1,22 +1,152 @@
 "use client";
-import React, { useState, useEffect, useCallback } from "react";
+/**
+ * UploadmeetShare.js  — Live Worship Room module
+ * ────────────────────────────────────────────────
+ * Firestore collection : "meetSessions"
+ * Cloudinary path      : faithframes/live-worship
+ *
+ * Schema stored in Firestore (read by src/services/firebaseService.js
+ * on the mobile app — normalizeLiveWorship() — keep field names in sync):
+ *   title           : string
+ *   subtitle        : string
+ *   imageUrl        : string   (Cloudinary secure URL)
+ *   verseText       : string
+ *   verseReference  : string
+ *   date            : string   (e.g. "2026-07-20")
+ *   startTime       : string   (e.g. "18:30")
+ *   endTime         : string   (e.g. "20:00")
+ *   meetLink        : string
+ *   platform        : string   (Google Meet / Zoom / YouTube Live / etc.)
+ *   ctaText         : string   (defaults to "Join Meeting")
+ *   status          : "auto" | "live" | "upcoming" | "ended"  (manual override)
+ *   published       : boolean
+ *   createdAt       : Timestamp
+ *   updatedAt       : Timestamp (on edit)
+ *
+ * Legacy fields (message / meetLink / likes / dislikes) from the old
+ * simple version are preserved read-only on older docs — the mobile
+ * normalizer already falls back to `message` when `title` is absent.
+ */
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { uploadImageToCloudinary } from "../../lib/cloudinary";
+import { validateImageFile, validateRequiredText } from "../../lib/validation";
 import { adminCreate, adminUpdate, adminDelete, fetchAdminContent } from "../../lib/adminApi";
+import { useToast } from "@/components/ui/Toast";
+import { useStoryUpload } from "@/hooks/useStoryUpload";
+import { StoryDropzone } from "@/components/shared/StoryDropzone";
+import { MEET_SHARE_CLOUDINARY_FOLDER, MEET_PLATFORMS, MEET_STATUS_OVERRIDES } from "@/lib/adminCollections";
+import { motion, AnimatePresence } from "framer-motion";
 
-const UploadmeetShare = () => {
-  const [form, setForm] = useState({
-    message: "",
-    meetLink: "",
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const FIRESTORE_COLLECTION = "meetSessions";
+
+const STATUS_FILTERS = [
+  { id: "all",         label: "All" },
+  { id: "published",   label: "Published" },
+  { id: "unpublished", label: "Unpublished" },
+];
+
+const BLANK_FORM = {
+  title:          "",
+  subtitle:       "",
+  imageUrl:       "",
+  verseText:      "",
+  verseReference: "",
+  date:           "",
+  startTime:      "",
+  endTime:        "",
+  meetLink:       "",
+  platform:       MEET_PLATFORMS[0],
+  ctaText:        "Join Meeting",
+  status:         "auto",
+  published:      true,
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function formatDate(timestamp) {
+  if (!timestamp) return "—";
+  const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day:   "numeric",
+    year:  "numeric",
   });
-  const [sessions, setSessions] = useState([]);
-  const [loading, setLoading] = useState(false);
+}
 
-  // Load data from server
+/** Mirrors the mobile app's deriveMeetingStatus() so the admin table shows the
+ *  same live/upcoming/ended state the app will actually render. */
+function deriveDisplayStatus(session) {
+  const manual = String(session.status || "").toLowerCase();
+  if (["live", "upcoming", "ended"].includes(manual)) return manual;
+
+  const dateStr = session.date || "";
+  const startMs = dateStr
+    ? Date.parse(`${dateStr} ${session.startTime || ""}`.trim()) || Date.parse(dateStr)
+    : NaN;
+  const endMs = dateStr && session.endTime
+    ? Date.parse(`${dateStr} ${session.endTime}`)
+    : (Number.isNaN(startMs) ? NaN : startMs + 2 * 60 * 60 * 1000);
+
+  const now = Date.now();
+  if (!Number.isNaN(startMs) && now < startMs) return "upcoming";
+  if (!Number.isNaN(endMs) && now > endMs) return "ended";
+  if (!Number.isNaN(startMs)) return "live";
+  return "upcoming";
+}
+
+const STATUS_STYLES = {
+  live:     "bg-green-100 text-green-700",
+  upcoming: "bg-blue-100 text-blue-700",
+  ended:    "bg-slate-100 text-slate-500",
+};
+
+function Spinner({ className = "w-4 h-4" }) {
+  return (
+    <svg className={`animate-spin ${className}`} fill="none" viewBox="0 0 24 24">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+    </svg>
+  );
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+export default function UploadmeetShare() {
+  const { addToast } = useToast();
+  const {
+    imageFile,
+    previewUrl,
+    uploadProgress,
+    loading,
+    clearImage,
+    handleFileSelect,
+    handleDrop,
+    beginUpload,
+    finishUpload,
+  } = useStoryUpload();
+
+  const [sessions,  setSessions]  = useState([]);
+  const [form,       setForm]      = useState(BLANK_FORM);
+  const [editId,     setEditId]    = useState(null);
+  const [error,      setError]     = useState("");
+  const [search,     setSearch]    = useState("");
+  const [filter,     setFilter]    = useState("all");
+  const [showForm,   setShowForm]  = useState(false);
+  const [viewSession, setViewSession] = useState(null);
+  const [fetching,   setFetching]  = useState(true);
+
+  // ─── Load data from server ──────────────────────────────────────────
   const loadSessions = useCallback(async () => {
+    setFetching(true);
     try {
-      const result = await fetchAdminContent("meetSessions");
+      const result = await fetchAdminContent(FIRESTORE_COLLECTION);
       setSessions(result.items || []);
     } catch (err) {
       console.error("[UploadmeetShare] load error:", err);
+    } finally {
+      setFetching(false);
     }
   }, []);
 
@@ -24,174 +154,726 @@ const UploadmeetShare = () => {
     loadSessions();
   }, [loadSessions]);
 
-  // 🧠 Handle input changes
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  // ─── Form helpers ──────────────────────────────────────────────────────────
+  const resetForm = () => {
+    setForm(BLANK_FORM);
+    setEditId(null);
+    clearImage();
+    setError("");
   };
 
-  // ➕ Add new meet session
-  const handleAdd = async (e) => {
-    e.preventDefault();
-    if (!form.message || !form.meetLink) {
-      alert("⚠️ Please fill all required fields");
+  const handleEdit = (session) => {
+    setForm({
+      title:          session.title          || session.message || "",
+      subtitle:       session.subtitle       || "",
+      imageUrl:       session.imageUrl       || "",
+      verseText:      session.verseText      || "",
+      verseReference: session.verseReference || "",
+      date:           session.date           || "",
+      startTime:      session.startTime      || "",
+      endTime:        session.endTime        || "",
+      meetLink:       session.meetLink       || "",
+      platform:       session.platform       || MEET_PLATFORMS[0],
+      ctaText:        session.ctaText        || "Join Meeting",
+      status:         session.status         || "auto",
+      published:      session.published !== false,
+    });
+    clearImage();
+    setEditId(session.id);
+    setShowForm(true);
+    setError("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // ─── Submit ────────────────────────────────────────────────────────────────
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setError("");
+
+    const titleCheck = validateRequiredText(form.title, "Title", 140);
+    const linkCheck   = validateRequiredText(form.meetLink, "Meeting link", 300);
+
+    const firstErr = [titleCheck, linkCheck].find((c) => !c.ok);
+    if (firstErr) { setError(firstErr.message); return; }
+
+    try {
+      new URL(linkCheck.value);
+    } catch {
+      setError("Meeting link must be a valid URL (include https://).");
       return;
     }
+
     try {
-      setLoading(true);
-      await adminCreate("meetSessions", {
-        ...form,
-        likes: 0,
-        dislikes: 0,
-      });
-      alert("✅ Meet session added");
-      setForm({ message: "", meetLink: "" });
+      beginUpload();
+      let imageUrl = form.imageUrl;
+
+      if (imageFile) {
+        const imageCheck = validateImageFile(imageFile);
+        if (!imageCheck.ok) throw new Error(imageCheck.message);
+        imageUrl = await uploadImageToCloudinary(imageFile, MEET_SHARE_CLOUDINARY_FOLDER);
+      }
+
+      const payload = {
+        title:          titleCheck.value,
+        subtitle:       form.subtitle.trim(),
+        imageUrl,
+        verseText:      form.verseText.trim(),
+        verseReference: form.verseReference.trim(),
+        date:           form.date,
+        startTime:      form.startTime,
+        endTime:        form.endTime,
+        meetLink:       linkCheck.value,
+        platform:       form.platform,
+        ctaText:        form.ctaText.trim() || "Join Meeting",
+        status:         form.status,
+        published:      Boolean(form.published),
+      };
+
+      if (editId) {
+        await adminUpdate(FIRESTORE_COLLECTION, editId, payload);
+        addToast({ type: "success", message: "Live Worship session updated." });
+        setEditId(null);
+      } else {
+        await adminCreate(FIRESTORE_COLLECTION, { ...payload, likes: 0, dislikes: 0 });
+        addToast({ type: "success", message: "Live Worship session created." });
+      }
+
+      resetForm();
+      setShowForm(false);
       loadSessions();
-    } catch (error) {
-      console.error(error);
-      alert("❌ Error adding session");
+    } catch (err) {
+      console.error("[UploadmeetShare] submit error:", err);
+      const msg = err?.message || "Failed to save session. Please try again.";
+      setError(msg);
+      addToast({ type: "error", message: msg });
     } finally {
-      setLoading(false);
+      finishUpload();
     }
   };
 
-  // 🗑️ Delete session
+  // ─── Delete ────────────────────────────────────────────────────────────────
   const handleDelete = async (id) => {
+    if (!confirm("Delete this Live Worship session? This action cannot be undone.")) return;
     try {
-      await adminDelete("meetSessions", id);
-      alert("🗑️ Session deleted");
+      await adminDelete(FIRESTORE_COLLECTION, id);
+      addToast({ type: "success", message: "Session deleted." });
+      if (viewSession?.id === id) setViewSession(null);
       loadSessions();
-    } catch (error) {
-      console.error(error);
-      alert("❌ Error deleting session");
+    } catch (err) {
+      console.error("[UploadmeetShare] delete error:", err);
+      addToast({ type: "error", message: err?.message || "Failed to delete session." });
     }
   };
 
-  // 👍 Like & 👎 Dislike functions
-  const handleLike = async (id, type) => {
+  // ─── Toggle published ──────────────────────────────────────────────────────
+  const handleTogglePublished = async (session) => {
     try {
-      const session = sessions.find((item) => item.id === id);
-      if (!session) return;
-      await adminUpdate("meetSessions", id, {
-        [type]: (session[type] || 0) + 1,
-      });
+      await adminUpdate(FIRESTORE_COLLECTION, session.id, { published: !session.published });
+      addToast({ type: "success", message: `Session ${session.published ? "unpublished" : "published"}` });
       loadSessions();
-    } catch (error) {
-      console.error("Error updating likes/dislikes:", error);
+    } catch (err) {
+      addToast({ type: "error", message: "Failed to update published status." });
     }
   };
 
+  // ─── Filtered list ─────────────────────────────────────────────────────────
+  const filteredSessions = useMemo(() => {
+    return sessions
+      .filter((s) => {
+        const haystack = [s.title, s.message, s.subtitle, s.platform].filter(Boolean).join(" ").toLowerCase();
+        if (!haystack.includes(search.toLowerCase())) return false;
+        if (filter === "published")   return s.published === true;
+        if (filter === "unpublished") return s.published === false;
+        return true;
+      })
+      .slice(0, 120);
+  }, [sessions, search, filter]);
+
+  // ─── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6 md:p-12 font-sans">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-4xl md:text-5xl font-extrabold mb-8 text-indigo-800 text-center drop-shadow-sm">
-          Admin Panel – Meet Share
-        </h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/20 p-4 md:p-8 font-sans">
+      <div className="max-w-7xl mx-auto space-y-8">
 
-        {/* 📝 Add Form */}
-        <form
-          onSubmit={handleAdd}
-          className="bg-white border border-gray-200 rounded-2xl shadow-lg p-6 md:p-10 transition space-y-5 mb-12"
-        >
-          <div className="grid md:grid-cols-2 gap-6">
-            <input
-              type="text"
-              name="message"
-              placeholder="Enter meeting message"
-              value={form.message}
-              onChange={handleChange}
-              className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-gray-800 font-medium"
-              required
-            />
-            <input
-              type="url"
-              name="meetLink"
-              placeholder="Enter Google Meet link"
-              value={form.meetLink}
-              onChange={handleChange}
-              className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none text-gray-800 font-medium"
-              required
-            />
+        {/* ── Page Header ────────────────────────────────────────────────── */}
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-widest text-indigo-500 font-semibold mb-1">
+              Live Worship Room
+            </p>
+            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">
+              Meet &amp; Share Sessions
+            </h1>
+            <p className="text-sm text-slate-400 mt-1">
+              Manage Live Worship Room meetings · {sessions.length} total
+            </p>
           </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                if (showForm) { resetForm(); }
+                setShowForm((o) => !o);
+              }}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition"
+            >
+              {showForm ? "✕  Hide Form" : editId ? "✏️  Edit Session" : "➕  Add Session"}
+            </button>
+          </div>
+        </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className={`w-full py-3 font-semibold rounded-2xl transition text-lg ${
-              loading
-                ? "bg-gray-400 text-white cursor-not-allowed"
-                : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md"
-            }`}
-          >
-            {loading ? "Adding..." : "➕ Add Meet Session"}
-          </button>
-        </form>
-
-        {/* 🧾 Meet Sessions List */}
-        <div className="space-y-6">
-          {sessions.length === 0 ? (
-            <div className="text-center text-gray-600">
-              <img
-                src="https://cdn-icons-png.flaticon.com/512/4076/4076503.png"
-                alt="empty"
-                className="mx-auto w-32 mb-4 opacity-70"
-              />
-              <p>No meet sessions added yet.</p>
+        {/* ── Stats row ──────────────────────────────────────────────────── */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { label: "Total",     value: sessions.length },
+            { label: "Published", value: sessions.filter((s) => s.published !== false).length },
+            { label: "Drafts",    value: sessions.filter((s) => s.published === false).length },
+            { label: "Showing",   value: filteredSessions.length },
+          ].map(({ label, value }) => (
+            <div key={label} className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+              <p className="text-xs text-slate-400 uppercase tracking-wider">{label}</p>
+              <p className="text-2xl font-bold text-slate-900 mt-2">{value}</p>
             </div>
-          ) : (
-            sessions.map((session) => (
-              <div
-                key={session.id}
-                className="bg-white p-6 rounded-xl shadow-md flex flex-col md:flex-row md:items-center justify-between hover:shadow-lg transition"
-              >
-                <div className="flex flex-col gap-2">
-                  <h2 className="text-xl font-bold text-gray-800">
-                    {session.message}
-                  </h2>
-                  <a
-                    href={session.meetLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 text-sm underline break-words hover:text-blue-800"
-                  >
-                    {session.meetLink}
-                  </a>
-                  <p className="text-xs text-gray-500">
-                    Created:{" "}
-                    {session.createdAt
-                      ? new Date(
-                          session.createdAt.seconds * 1000
-                        ).toLocaleString()
-                      : "Just now"}
+          ))}
+        </div>
+
+        {/* ── Error banner ───────────────────────────────────────────────── */}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              key="error"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className="flex items-start gap-3 bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm"
+            >
+              <span className="mt-0.5 flex-shrink-0">⚠️</span>
+              <span className="flex-1">{error}</span>
+              <button onClick={() => setError("")} className="text-red-400 hover:text-red-600">✕</button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Search & filter ────────────────────────────────────────────── */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by title, platform…"
+            className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+          />
+          <div className="relative">
+            <select
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="appearance-none pl-3.5 pr-9 py-2.5 border border-gray-200 rounded-xl bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 cursor-pointer transition"
+            >
+              {STATUS_FILTERS.map((f) => (
+                <option key={f.id} value={f.id}>{f.label}</option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Add / Edit Form ─────────────────────────────────────────────── */}
+        <AnimatePresence>
+          {showForm && (
+            <motion.div
+              key="session-form"
+              initial={{ opacity: 0, y: -12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden"
+            >
+              {/* Form header */}
+              <div className={`px-6 py-4 border-b border-gray-100 ${editId ? "bg-indigo-50" : "bg-indigo-50/30"}`}>
+                <h2 className="text-base font-bold text-slate-900">
+                  {editId ? "✏️  Edit Live Worship Session" : "➕  Add New Live Worship Session"}
+                </h2>
+                {editId && (
+                  <p className="text-xs text-indigo-700 mt-0.5">
+                    Editing an existing session — save will overwrite the stored entry.
                   </p>
-                  <div className="flex items-center gap-4 mt-2 text-sm text-gray-700">
-                    <button
-                      onClick={() => handleLike(session.id, "likes")}
-                      className="bg-green-100 hover:bg-green-200 px-3 py-1 rounded-lg"
-                    >
-                      👍 {session.likes || 0}
-                    </button>
-                    <button
-                      onClick={() => handleLike(session.id, "dislikes")}
-                      className="bg-red-100 hover:bg-red-200 px-3 py-1 rounded-lg"
-                    >
-                      👎 {session.dislikes || 0}
-                    </button>
+                )}
+                {uploadProgress > 0 && (
+                  <div className="mt-3 w-full rounded-full bg-slate-200 overflow-hidden h-1.5">
+                    <div
+                      className="h-full bg-indigo-500 transition-all duration-200"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                {/* Title + Subtitle */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                      Title <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      value={form.title}
+                      onChange={(e) => setForm({ ...form, title: e.target.value })}
+                      placeholder="Join our worship gathering"
+                      className="w-full px-3.5 py-3 border border-gray-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                      maxLength={140}
+                    />
+                    <p className="text-[11px] text-gray-400 mt-1 text-right">{form.title.length}/140</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                      Subtitle
+                    </label>
+                    <input
+                      value={form.subtitle}
+                      onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
+                      placeholder="Weekly Study Circle"
+                      className="w-full px-3.5 py-3 border border-gray-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                      maxLength={140}
+                    />
                   </div>
                 </div>
 
-                <button
-                  onClick={() => handleDelete(session.id)}
-                  className="mt-4 md:mt-0 bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-lg text-sm font-semibold shadow-sm"
-                >
-                  Delete
-                </button>
+                {/* Verse text + reference */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                      Verse Text
+                    </label>
+                    <textarea
+                      value={form.verseText}
+                      onChange={(e) => setForm({ ...form, verseText: e.target.value })}
+                      placeholder="For where two or three gather in my name…"
+                      className="w-full px-3.5 py-3 border border-gray-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 min-h-[88px] resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                      maxLength={300}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                      Verse Reference
+                    </label>
+                    <input
+                      value={form.verseReference}
+                      onChange={(e) => setForm({ ...form, verseReference: e.target.value })}
+                      placeholder="Matthew 18:20"
+                      className="w-full px-3.5 py-3 border border-gray-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                      maxLength={80}
+                    />
+                  </div>
+                </div>
+
+                {/* Date + Start + End time */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Date</label>
+                    <input
+                      type="date"
+                      value={form.date}
+                      onChange={(e) => setForm({ ...form, date: e.target.value })}
+                      className="w-full px-3.5 py-3 border border-gray-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Start Time</label>
+                    <input
+                      type="time"
+                      value={form.startTime}
+                      onChange={(e) => setForm({ ...form, startTime: e.target.value })}
+                      className="w-full px-3.5 py-3 border border-gray-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">End Time</label>
+                    <input
+                      type="time"
+                      value={form.endTime}
+                      onChange={(e) => setForm({ ...form, endTime: e.target.value })}
+                      className="w-full px-3.5 py-3 border border-gray-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                    />
+                  </div>
+                </div>
+
+                {/* Meet link + Platform */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                      Meeting Link <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="url"
+                      value={form.meetLink}
+                      onChange={(e) => setForm({ ...form, meetLink: e.target.value })}
+                      placeholder="https://meet.google.com/abc-defg-hij"
+                      className="w-full px-3.5 py-3 border border-gray-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Platform</label>
+                    <select
+                      value={form.platform}
+                      onChange={(e) => setForm({ ...form, platform: e.target.value })}
+                      className="w-full px-3.5 py-3 border border-gray-200 rounded-xl text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                    >
+                      {MEET_PLATFORMS.map((p) => (
+                        <option key={p} value={p}>{p}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* CTA text + Status override */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                      Button Text
+                    </label>
+                    <input
+                      value={form.ctaText}
+                      onChange={(e) => setForm({ ...form, ctaText: e.target.value })}
+                      placeholder="Join Meeting"
+                      className="w-full px-3.5 py-3 border border-gray-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                      maxLength={40}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                      Status Override
+                    </label>
+                    <select
+                      value={form.status}
+                      onChange={(e) => setForm({ ...form, status: e.target.value })}
+                      className="w-full px-3.5 py-3 border border-gray-200 rounded-xl text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                    >
+                      {MEET_STATUS_OVERRIDES.map((s) => (
+                        <option key={s.value} value={s.value}>{s.label}</option>
+                      ))}
+                    </select>
+                    <p className="text-[11px] text-gray-400 mt-1">
+                      &quot;Auto&quot; derives live/upcoming/ended from date &amp; time.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Banner image dropzone */}
+                <StoryDropzone
+                  label="Banner Image"
+                  previewUrl={previewUrl || form.imageUrl || null}
+                  onFileSelect={handleFileSelect}
+                  onDrop={handleDrop}
+                  onClear={() => { clearImage(); setForm({ ...form, imageUrl: "" }); }}
+                  disabled={loading}
+                />
+
+                {/* Published toggle */}
+                <label className="inline-flex items-center gap-3 cursor-pointer select-none">
+                  <div
+                    onClick={() => setForm({ ...form, published: !form.published })}
+                    className={`relative w-10 h-6 rounded-full transition-colors ${
+                      form.published ? "bg-indigo-500" : "bg-gray-300"
+                    }`}
+                  >
+                    <span
+                      className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${
+                        form.published ? "translate-x-4" : ""
+                      }`}
+                    />
+                  </div>
+                  <span className="text-sm font-medium text-slate-700">
+                    {form.published ? "Published (live on app)" : "Draft (hidden)"}
+                  </span>
+                </label>
+
+                {/* Actions */}
+                <div className="flex gap-3 pt-1">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className={`flex-1 py-3 rounded-xl text-sm font-semibold transition flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed ${
+                      editId
+                        ? "bg-indigo-400 hover:bg-indigo-500 text-white"
+                        : "bg-indigo-600 hover:bg-indigo-700 text-white"
+                    }`}
+                  >
+                    {loading ? <><Spinner /> Saving…</> : editId ? "Update Session" : "Create Session"}
+                  </button>
+                  {editId && (
+                    <button
+                      type="button"
+                      onClick={resetForm}
+                      className="px-5 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-semibold transition"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
+              </form>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Sessions Table ───────────────────────────────────────────────── */}
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+            <h2 className="font-bold text-slate-900">
+              Live Worship Sessions
+              <span className="ml-2 text-sm font-normal text-slate-400">
+                {fetching ? "loading…" : `${filteredSessions.length} of ${sessions.length}`}
+              </span>
+            </h2>
+          </div>
+
+          {fetching ? (
+            <div className="flex flex-col items-center gap-3 py-16 text-gray-400">
+              <Spinner className="w-6 h-6 text-indigo-400" />
+              <p className="text-sm">Loading sessions…</p>
+            </div>
+          ) : filteredSessions.length === 0 ? (
+            <div className="text-center py-16 text-slate-400 text-sm">
+              No sessions match your search or filter.
+            </div>
+          ) : (
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden lg:block overflow-x-auto">
+                <table className="min-w-full divide-y divide-slate-100 text-sm">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      {["Image", "Title", "Date / Time", "Meeting Status", "Published", "Created", "Actions"].map((h) => (
+                        <th key={h} className="px-4 py-3.5 text-left text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 bg-white">
+                    {filteredSessions.map((session) => {
+                      const displayStatus = deriveDisplayStatus(session);
+                      return (
+                        <tr key={session.id} className="hover:bg-slate-50 transition-colors">
+                          <td className="px-4 py-4">
+                            <div className="h-16 w-24 overflow-hidden rounded-xl bg-slate-100 flex-shrink-0">
+                              {session.imageUrl ? (
+                                <img src={session.imageUrl} alt={session.title || session.message} className="h-full w-full object-cover" />
+                              ) : (
+                                <div className="flex h-full items-center justify-center text-xs text-slate-400">No img</div>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 max-w-[220px]">
+                            <p className="font-semibold text-slate-900 truncate">{session.title || session.message}</p>
+                            <p className="text-xs text-slate-400 truncate mt-0.5">{session.subtitle}</p>
+                          </td>
+                          <td className="px-4 py-4 text-slate-600 whitespace-nowrap text-xs">
+                            {session.date || "—"} {session.startTime ? `· ${session.startTime}` : ""}
+                          </td>
+                          <td className="px-4 py-4">
+                            <span className={`inline-flex px-2.5 py-1 rounded-full text-[11px] font-semibold capitalize ${STATUS_STYLES[displayStatus]}`}>
+                              {displayStatus}
+                            </span>
+                          </td>
+                          <td className="px-4 py-4">
+                            <span className={`inline-flex px-2.5 py-1 rounded-full text-[11px] font-semibold ${
+                              session.published !== false
+                                ? "bg-indigo-100 text-indigo-700"
+                                : "bg-rose-100 text-rose-700"
+                            }`}>
+                              {session.published !== false ? "Live" : "Draft"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-4 text-slate-400 whitespace-nowrap text-xs">
+                            {formatDate(session.createdAt)}
+                          </td>
+                          <td className="px-4 py-4">
+                            <div className="flex flex-wrap gap-1.5">
+                              <button
+                                onClick={() => setViewSession(viewSession?.id === session.id ? null : session)}
+                                className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+                              >
+                                {viewSession?.id === session.id ? "Close" : "View"}
+                              </button>
+                              <button
+                                onClick={() => handleEdit(session)}
+                                className="px-3 py-1.5 rounded-lg bg-indigo-100 text-indigo-800 text-xs font-semibold hover:bg-indigo-200 transition"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleTogglePublished(session)}
+                                className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold hover:bg-slate-200 transition"
+                              >
+                                {session.published !== false ? "Unpublish" : "Publish"}
+                              </button>
+                              <button
+                                onClick={() => handleDelete(session.id)}
+                                className="px-3 py-1.5 rounded-lg bg-red-100 text-red-700 text-xs font-semibold hover:bg-red-200 transition"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
-            ))
+
+              {/* Mobile Card-Grid List View */}
+              <div className="lg:hidden space-y-4 p-4 bg-slate-50/50 rounded-b-2xl">
+                {filteredSessions.map((session) => {
+                  const displayStatus = deriveDisplayStatus(session);
+                  return (
+                    <div
+                      key={session.id}
+                      className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-4"
+                    >
+                      <div className="flex gap-4">
+                        <div className="h-16 w-24 overflow-hidden rounded-xl bg-slate-100 flex-shrink-0">
+                          {session.imageUrl ? (
+                            <img src={session.imageUrl} alt={session.title || session.message} className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="flex h-full items-center justify-center text-xs text-slate-400">No img</div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-slate-900 truncate">{session.title || session.message}</h3>
+                          <p className="text-xs text-slate-400 truncate mt-0.5">{session.subtitle}</p>
+                          <p className="text-xs font-medium text-slate-500 mt-1">
+                            {session.date || "—"} {session.startTime ? `· ${session.startTime}` : ""}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-3 border-t border-slate-50 text-xs text-slate-400">
+                        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[11px] font-semibold capitalize ${STATUS_STYLES[displayStatus]}`}>
+                          {displayStatus}
+                        </span>
+                        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
+                          session.published !== false
+                            ? "bg-indigo-100 text-indigo-700"
+                            : "bg-rose-100 text-rose-700"
+                        }`}>
+                          {session.published !== false ? "Live" : "Draft"}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 pt-2">
+                        <button
+                          onClick={() => setViewSession(viewSession?.id === session.id ? null : session)}
+                          className="flex-1 min-w-[60px] px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+                        >
+                          {viewSession?.id === session.id ? "Close" : "View"}
+                        </button>
+                        <button
+                          onClick={() => handleEdit(session)}
+                          className="flex-1 min-w-[60px] px-3 py-2 rounded-lg bg-indigo-100 text-indigo-800 text-xs font-semibold hover:bg-indigo-200 transition"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleTogglePublished(session)}
+                          className="flex-1 min-w-[60px] px-3 py-2 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold hover:bg-slate-200 transition"
+                        >
+                          {session.published !== false ? "Unpublish" : "Publish"}
+                        </button>
+                        <button
+                          onClick={() => handleDelete(session.id)}
+                          className="flex-1 min-w-[60px] px-3 py-2 rounded-lg bg-red-100 text-red-700 text-xs font-semibold hover:bg-red-200 transition"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           )}
         </div>
+
+        {/* ── Session Preview Panel ─────────────────────────────────────────── */}
+        <AnimatePresence>
+          {viewSession && (
+            <motion.div
+              key="preview"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 16 }}
+              className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden"
+            >
+              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                <div>
+                  <h2 className="font-bold text-slate-900">Live Worship Preview</h2>
+                  <p className="text-xs text-slate-400 mt-0.5">Read-only view of the selected session.</p>
+                </div>
+                <button
+                  onClick={() => setViewSession(null)}
+                  className="px-4 py-2 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition"
+                >
+                  Close
+                </button>
+              </div>
+
+              <div className="p-6 grid gap-6 lg:grid-cols-[280px_1fr]">
+                <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 max-h-[360px]">
+                  {viewSession.imageUrl ? (
+                    <img src={viewSession.imageUrl} alt={viewSession.title} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full min-h-[200px] items-center justify-center text-sm text-slate-400">
+                      No banner image
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-4">
+                  <div className="rounded-2xl border border-slate-100 bg-slate-50 p-5">
+                    <p className="text-xs uppercase tracking-widest text-slate-400">{viewSession.platform}</p>
+                    <h3 className="mt-2 text-2xl font-bold text-slate-900">{viewSession.title || viewSession.message}</h3>
+                    <p className="mt-2 text-sm text-slate-600 leading-relaxed">{viewSession.subtitle}</p>
+                    {viewSession.verseText && (
+                      <p className="mt-3 text-sm italic text-slate-600">
+                        “{viewSession.verseText}” <span className="not-italic text-slate-400">— {viewSession.verseReference}</span>
+                      </p>
+                    )}
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <span className="px-3 py-1.5 rounded-full bg-white shadow-sm text-xs text-slate-600 border border-slate-200">
+                        📅 {viewSession.date || "No date"} {viewSession.startTime ? `· ${viewSession.startTime}` : ""}
+                      </span>
+                      <span className={`px-3 py-1.5 rounded-full text-xs font-semibold capitalize ${STATUS_STYLES[deriveDisplayStatus(viewSession)]}`}>
+                        {deriveDisplayStatus(viewSession)}
+                      </span>
+                      <span className={`px-3 py-1.5 rounded-full text-xs font-semibold ${
+                        viewSession.published !== false ? "bg-indigo-100 text-indigo-700" : "bg-rose-100 text-rose-700"
+                      }`}>
+                        {viewSession.published !== false ? "Published" : "Draft"}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="rounded-2xl border border-slate-100 bg-white p-5">
+                    <h4 className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-3">
+                      Meeting Link
+                    </h4>
+                    <a
+                      href={viewSession.meetLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-indigo-600 underline break-words hover:text-indigo-800"
+                    >
+                      {viewSession.meetLink}
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
       </div>
     </div>
   );
-};
-
-export default UploadmeetShare;
+}

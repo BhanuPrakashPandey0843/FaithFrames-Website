@@ -1,0 +1,12 @@
+go to the upload wallpaper screen in the admin panel http://localhost:3000/admin/uploads/upload-wallpaper there is a option of select category remove it 
+
+remove the feature of upload quote http://localhost:3000/admin/uploads/upload-quote
+remove the feature of http://localhost:3000/admin/uploads/upload-godswords 
+in this screen http://localhost:3000/admin/uploads/upload-quiz  there is a category option reomve that and then update it the current category with Daily challanges , bible knowledge quiz ,old testament ,quiz new testamet quiz ,jesus quiz ,apostel quiz ,randome quiz
+
+there is a option for http://localhost:3000/admin/uploads/upload-stories  in this we can uplaod stories for 2 compoenents from one admin panel that is featured stories and and one more i want it to be 2 different upload panels for featured story one seprate and for the other one the current one 
+
+now there is  need to make one more feature that will show the data of the premium uses of the app who have paid money in the app and are our users i need to see there deatils also there profile deatils  amount paid names contact details and all the other deatils are need to be there for that make a  seprate screen conet it to for base and teh payment gate ways  to fetah the data as need and thigs need to be perfect and of the best quily of coe ready for every thing specially it should work in vercel flawlesslye so make the chnages accprdingly and perfectly 
+add the prerium feature to the side basr also unlike any other feature 
+teh ui for the http://localhost:3000/admin/uploads/upload-stories screen needs a bit of polish its not responsive an no[t fiiting in the screen proeprly so take care of those things proerl;y and the full website must be production ready 
+remoev teh logo from the side navbar and the upper nav bar there will be nothing in that 

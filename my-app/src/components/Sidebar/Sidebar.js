@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   BookOpen,
   LayoutDashboard,
@@ -11,10 +11,14 @@ import {
   User,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   MessageCircle,
   Video,
   Star,
   Crown,
+  Clapperboard,
+  GalleryHorizontal,
+  BarChart3,
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -26,10 +30,19 @@ const menuItems = [
   { name: "Upload Quiz Question", icon: FileQuestion, path: "/admin/uploads/upload-quiz" },
   { name: "Upload Daily Verse", icon: ClipboardList, path: "/admin/uploads/upload-verse" },
   { name: "Upload Daily Prayer", icon: ClipboardList, path: "/admin/uploads/upload-prayers" },
-  { name: "Upload Witness", icon: MessageCircle, path: "/admin/uploads/upload-witness" },
+  {
+    name: "Witness Videos",
+    icon: Clapperboard,
+    children: [
+      { name: "Dashboard", icon: BarChart3, path: "/admin/witness-videos" },
+      { name: "Carousel Manager", icon: GalleryHorizontal, path: "/admin/witness-videos/carousel" },
+      { name: "Videos Manager", icon: Video, path: "/admin/witness-videos/videos" },
+    ],
+  },
+  { name: "Witness Testimonials", icon: MessageCircle, path: "/admin/uploads/upload-witness" },
   { name: "Upload Meet-Share", icon: Video, path: "/admin/uploads/upload-meetShare" },
-  { name: "Upload Stories", icon: BookOpen, path: "/admin/uploads/upload-stories" },
-  { name: "Upload Featured Story", icon: Star, path: "/admin/uploads/upload-featured-story" },
+  { name: "Upload Faith Stories", icon: BookOpen, path: "/admin/uploads/upload-stories" },
+  { name: "Upload Women of the Bible Story", icon: Star, path: "/admin/uploads/upload-featured-story" },
   { name: "Premium Users", icon: Crown, path: "/admin/premium-users" },
   { name: "Profile", icon: User, path: "/admin/uploads/profile" },
 ];
@@ -39,6 +52,9 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
+  const [openGroup, setOpenGroup] = useState(() =>
+    menuItems.find((item) => item.children?.some((c) => pathname?.startsWith(c.path)))?.name || null
+  );
 
   useEffect(() => {
     const handleResize = () => setIsOpen(window.innerWidth >= 768);
@@ -46,6 +62,11 @@ export default function Sidebar() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useEffect(() => {
+    const activeGroup = menuItems.find((item) => item.children?.some((c) => pathname === c.path));
+    if (activeGroup) setOpenGroup(activeGroup.name);
+  }, [pathname]);
 
   const handleLogout = async () => {
     if (loggingOut) return;
@@ -87,6 +108,76 @@ export default function Sidebar() {
         {/* Nav Items */}
         <ul className="mt-3 space-y-1 px-3">
           {menuItems.map((item) => {
+            if (item.children) {
+              const isGroupActive = item.children.some((c) => pathname === c.path);
+              const expanded = openGroup === item.name;
+              return (
+                <li key={item.name}>
+                  <button
+                    type="button"
+                    onClick={() => setOpenGroup(expanded ? null : item.name)}
+                    title={item.name}
+                    className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all group ${
+                      isGroupActive
+                        ? "bg-[#C9DAFF] text-[#558AFF] font-semibold"
+                        : "hover:bg-blue-50 hover:text-[#558AFF] text-gray-700"
+                    }`}
+                  >
+                    <item.icon
+                      className={`w-5 h-5 flex-shrink-0 ${
+                        isGroupActive ? "text-[#558AFF]" : "text-gray-500 group-hover:text-[#558AFF]"
+                      } ${!isOpen ? "mx-auto" : ""}`}
+                    />
+                    {isOpen && (
+                      <>
+                        <span className="text-sm font-medium tracking-wide truncate flex-1 text-left">
+                          {item.name}
+                        </span>
+                        <ChevronDown
+                          className={`w-4 h-4 flex-shrink-0 transition-transform ${expanded ? "rotate-180" : ""}`}
+                        />
+                      </>
+                    )}
+                  </button>
+
+                  <AnimatePresence initial={false}>
+                    {expanded && isOpen && (
+                      <motion.ul
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden pl-4 mt-1 space-y-1"
+                      >
+                        {item.children.map((child) => {
+                          const isActive = pathname === child.path;
+                          return (
+                            <li key={child.path}>
+                              <Link
+                                href={child.path}
+                                className={`flex items-center gap-3 p-2.5 rounded-lg transition-all group ${
+                                  isActive
+                                    ? "bg-[#558AFF] text-white font-semibold"
+                                    : "hover:bg-blue-50 hover:text-[#558AFF] text-gray-600"
+                                }`}
+                              >
+                                <child.icon
+                                  className={`w-4 h-4 flex-shrink-0 ${
+                                    isActive ? "text-white" : "text-gray-400 group-hover:text-[#558AFF]"
+                                  }`}
+                                />
+                                <span className="text-sm font-medium truncate">{child.name}</span>
+                              </Link>
+                            </li>
+                          );
+                        })}
+                      </motion.ul>
+                    )}
+                  </AnimatePresence>
+                </li>
+              );
+            }
+
             const isActive = pathname === item.path;
             return (
               <li key={item.path}>

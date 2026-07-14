@@ -1,8 +1,32 @@
 import { NextResponse } from "next/server";
+import crypto from "crypto";
 import { FieldValue } from "firebase-admin/firestore";
 import { requireAdminSession } from "../../../../lib/requireAdminSession";
 import { getAdminDb, isFirebaseAdminConfigured } from "../../../../lib/firebaseAdmin";
-import { ADMIN_CONTENT_COLLECTIONS, QUIZ_CATEGORIES, QUIZ_DIFFICULTIES } from "../../../../lib/adminCollections";
+import { ADMIN_CONTENT_COLLECTIONS, QUIZ_CATEGORIES, QUIZ_DIFFICULTIES, WITNESS_VIDEO_CATEGORIES } from "../../../../lib/adminCollections";
+
+/** Best-effort Cloudinary cleanup — never blocks or fails the Firestore delete. */
+async function destroyCloudinaryAsset(publicId, resourceType) {
+  if (!publicId) return;
+  const apiKey = process.env.CLOUDINARY_API_KEY?.trim();
+  const apiSecret = process.env.CLOUDINARY_API_SECRET?.trim();
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME?.trim() || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME?.trim();
+  if (!apiKey || !apiSecret || !cloudName) return;
+  try {
+    const timestamp = Math.round(Date.now() / 1000);
+    const signature = crypto
+      .createHash("sha1")
+      .update(`public_id=${publicId}&timestamp=${timestamp}${apiSecret}`)
+      .digest("hex");
+    await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/destroy`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ public_id: publicId, timestamp: String(timestamp), api_key: apiKey, signature }),
+    });
+  } catch (err) {
+    console.error("[destroyCloudinaryAsset]", err);
+  }
+}
 
 // Mock data for when Firebase Admin isn't configured
 const MOCK_DATA = {
@@ -32,6 +56,12 @@ const MOCK_DATA = {
   meetSessions: [
     { id: "mock-meet-1", message: "Weekly Study Circle", meetLink: "https://meet.google.com/abc-defg-hij", likes: 5, dislikes: 0, createdAt: new Date().toISOString() },
     { id: "mock-meet-2", message: "Quran Recitation", meetLink: "https://meet.google.com/xyz-1234-567", likes: 12, dislikes: 1, createdAt: new Date(Date.now() - 86400000).toISOString() },
+  ],
+  witnessVideos: [
+    { id: "mock-witness-video-1", title: "How I Found Grace", description: "A short testimony about walking through hardship and finding faith.", thumbnail: "", videoUrl: "", duration: 184, category: "Testimony", tags: ["faith", "healing"], featured: true, displayOrder: 0, isActive: true, views: 128, likes: 24, dislikes: 1, publishedAt: new Date().toISOString(), createdAt: new Date().toISOString() },
+  ],
+  witnessCarousel: [
+    { id: "mock-banner-1", image: "", title: "New Testimonies Every Week", subtitle: "Stories of faith from our community", displayOrder: 0, isActive: true, createdAt: new Date().toISOString() },
   ],
   dailyVerses: [
     { id: "mock-verse-1", verse: "And He is with you wherever you are.", reference: "Quran 57:4", bgurl: "", createdAt: new Date().toISOString() },
@@ -119,6 +149,75 @@ function withCreateTimestamps(collection, data) {
   return payload;
 }
 
+function validateWitnessVideoPayload(data) {
+  const title = String(data?.title || "").trim();
+  if (!title) return "Title is required.";
+  if (title.length > 150) return "Title must be 150 characters or fewer.";
+
+  const description = String(data?.description || "").trim();
+  if (!description) return "Description is required.";
+
+  if (!String(data?.videoUrl || "").trim()) return "A video upload is required.";
+  if (!String(data?.thumbnail || "").trim()) return "A thumbnail image is required.";
+
+  const category = String(data?.category || "").trim();
+  if (!WITNESS_VIDEO_CATEGORIES.includes(category)) {
+    return `Invalid category. Must be one of: ${WITNESS_VIDEO_CATEGORIES.join(", ")}.`;
+  }
+
+  if (data.duration !== undefined && (typeof data.duration !== "number" || data.duration < 0)) {
+    return "Duration must be a non-negative number of seconds.";
+  }
+
+  return null;
+}
+
+function sanitizeWitnessVideoPayload(data, { isCreate }) {
+  const payload = {
+    title: String(data.title).trim(),
+    description: String(data.description).trim(),
+    thumbnail: String(data.thumbnail).trim(),
+    thumbnailPublicId: String(data.thumbnailPublicId || "").trim(),
+    videoUrl: String(data.videoUrl).trim(),
+    videoPublicId: String(data.videoPublicId || "").trim(),
+    duration: Number(data.duration) || 0,
+    category: String(data.category).trim(),
+    tags: Array.isArray(data.tags) ? data.tags.map((t) => String(t).trim()).filter(Boolean).slice(0, 20) : [],
+    featured: data.featured === true,
+    displayOrder: Number.isFinite(Number(data.displayOrder)) ? Number(data.displayOrder) : 0,
+    isActive: data.isActive !== false,
+    seoTitle: String(data.seoTitle || "").trim(),
+    seoDescription: String(data.seoDescription || "").trim(),
+    transcript: String(data.transcript || "").trim(),
+    publishedAt: data.publishedAt ? new Date(data.publishedAt) : new Date(),
+  };
+  if (isCreate) {
+    payload.views = 0;
+    payload.likes = 0;
+    payload.dislikes = 0;
+  }
+  return payload;
+}
+
+function validateWitnessCarouselPayload(data) {
+  if (!String(data?.image || "").trim()) return "Banner image is required.";
+  const title = String(data?.title || "").trim();
+  if (!title) return "Title is required.";
+  if (title.length > 100) return "Title must be 100 characters or fewer.";
+  return null;
+}
+
+function sanitizeWitnessCarouselPayload(data) {
+  return {
+    image: String(data.image).trim(),
+    imagePublicId: String(data.imagePublicId || "").trim(),
+    title: String(data.title).trim(),
+    subtitle: String(data.subtitle || "").trim(),
+    displayOrder: Number.isFinite(Number(data.displayOrder)) ? Number(data.displayOrder) : 0,
+    isActive: data.isActive !== false,
+  };
+}
+
 export async function GET(req) {
   const session = await requireAdminSession(req);
   if (!session) return unauthorized();
@@ -134,7 +233,13 @@ export async function GET(req) {
 
   try {
     const db = getAdminDb();
-    const snapshot = await db.collection(collection).orderBy(collection === "religiousWallpapers" ? "uploadedAt" : "createdAt", "desc").get();
+    let orderField = collection === "religiousWallpapers" ? "uploadedAt" : "createdAt";
+    let orderDirection = "desc";
+    if (collection === "witnessCarousel") {
+      orderField = "displayOrder";
+      orderDirection = "asc";
+    }
+    const snapshot = await db.collection(collection).orderBy(orderField, orderDirection).get();
     const items = snapshot.docs.map((docSnap) => ({
       id: docSnap.id,
       ...docSnap.data(),
@@ -165,6 +270,18 @@ export async function POST(req) {
       return NextResponse.json({ message: validationError }, { status: 400 });
     }
     payload = sanitizeQuestionPayload(data);
+  } else if (collection === "witnessVideos") {
+    const validationError = validateWitnessVideoPayload(data);
+    if (validationError) {
+      return NextResponse.json({ message: validationError }, { status: 400 });
+    }
+    payload = sanitizeWitnessVideoPayload(data, { isCreate: true });
+  } else if (collection === "witnessCarousel") {
+    const validationError = validateWitnessCarouselPayload(data);
+    if (validationError) {
+      return NextResponse.json({ message: validationError }, { status: 400 });
+    }
+    payload = sanitizeWitnessCarouselPayload(data);
   }
 
   try {
@@ -199,6 +316,18 @@ export async function PATCH(req) {
       return NextResponse.json({ message: validationError }, { status: 400 });
     }
     payload = sanitizeQuestionPayload(data);
+  } else if (collection === "witnessVideos") {
+    const validationError = validateWitnessVideoPayload(data);
+    if (validationError) {
+      return NextResponse.json({ message: validationError }, { status: 400 });
+    }
+    payload = sanitizeWitnessVideoPayload(data, { isCreate: false });
+  } else if (collection === "witnessCarousel") {
+    const validationError = validateWitnessCarouselPayload(data);
+    if (validationError) {
+      return NextResponse.json({ message: validationError }, { status: 400 });
+    }
+    payload = sanitizeWitnessCarouselPayload(data);
   }
 
   try {
@@ -231,7 +360,24 @@ export async function DELETE(req) {
 
   try {
     const db = getAdminDb();
-    await db.collection(collection).doc(id).delete();
+    const docRef = db.collection(collection).doc(id);
+
+    if (collection === "witnessVideos" || collection === "witnessCarousel") {
+      const snap = await docRef.get();
+      const existing = snap.data();
+      if (existing) {
+        if (collection === "witnessVideos") {
+          await Promise.all([
+            destroyCloudinaryAsset(existing.videoPublicId, "video"),
+            destroyCloudinaryAsset(existing.thumbnailPublicId, "image"),
+          ]);
+        } else {
+          await destroyCloudinaryAsset(existing.imagePublicId, "image");
+        }
+      }
+    }
+
+    await docRef.delete();
     return NextResponse.json({ success: true, id });
   } catch (err) {
     console.error("[admin/content DELETE]", err);

@@ -8,8 +8,8 @@ rules_version = '2';
 // ─────────────────────
 // • Admin writes  → Next.js API routes (/api/admin/*) using the Admin SDK.
 //                   Admin SDK calls bypass these rules entirely.
-// • Admin reads   → Next.js API routes (/api/admin/collection/*) – also Admin SDK.
-//                   Client-side components fetch from the API, NOT directly from
+// • Admin reads   → Next.js API routes (/api/admin/collection/*) — also Admin SDK.
+//                   Client-side components fetch from the API, not directly from
 //                   Firestore, so no client-SDK admin reads are needed.
 // • Mobile / public reads → Firebase client SDK with Firebase Auth.
 //                   Only authenticated app users read content collections.
@@ -95,12 +95,70 @@ service cloud.firestore {
     match /meetSessions/{docId} {
       allow read: if isAuthenticated();
       allow write: if false; // Admin SDK only
+
+      // Live Worship Room RSVPs — one doc per user, keyed by uid.
+      // Read is authenticated (matches parent) so the app can show
+      // real-time going/not-going counts; write is restricted to the
+      // owning user and validated to a fixed shape.
+      match /rsvps/{uid} {
+        allow read: if isAuthenticated();
+        allow create, update: if isOwner(uid)
+          && request.resource.data.response in ['going', 'not_going']
+          && request.resource.data.keys().hasOnly(['response', 'updatedAt']);
+        allow delete: if false;
+      }
     }
 
     // God's words / quotes collection
     match /godsWords/{docId} {
       allow read: if isAuthenticated();
       allow write: if false; // Admin SDK only
+    }
+
+    // Study plans collection
+    match /studyPlans/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Admin SDK only
+    }
+
+    // ── Witness Videos module ────────────────────────────────────────────────
+    // Hero carousel banners — fully admin-controlled, read-only for the app.
+    match /witnessCarousel/{bannerId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Admin SDK only
+    }
+
+    // Witness video catalogue. Full document CRUD (title, video, thumbnail,
+    // etc.) is Admin SDK only. A narrow exception lets authenticated users
+    // nudge the "views"/"likes"/"dislikes" counters by at most 1 per write —
+    // this keeps the mobile app's real-time counts free (they ride along on
+    // the existing list listener) without exposing full write access.
+    match /witnessVideos/{videoId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+
+      allow update: if isAuthenticated()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views', 'likes', 'dislikes', 'updatedAt'])
+        && request.resource.data.views is number
+        && request.resource.data.likes is number
+        && request.resource.data.dislikes is number
+        && (request.resource.data.views - resource.data.views) in [-1, 0, 1]
+        && (request.resource.data.likes - resource.data.likes) in [-1, 0, 1]
+        && (request.resource.data.dislikes - resource.data.dislikes) in [-1, 0, 1];
+
+      // One doc per user: tracks whether *this* user has liked / disliked /
+      // already counted a view for this video. Mutually exclusive like+dislike
+      // is enforced here, not just client-side.
+      match /userInteractions/{uid} {
+        allow read: if isAuthenticated();
+        allow create, update: if isOwner(uid)
+          && request.resource.data.keys().hasOnly(['liked', 'disliked', 'viewed', 'updatedAt'])
+          && request.resource.data.liked is bool
+          && request.resource.data.disliked is bool
+          && request.resource.data.viewed is bool
+          && !(request.resource.data.liked == true && request.resource.data.disliked == true);
+        allow delete: if false;
+      }
     }
 
     // ── User profile collection ─────────────────────────────────────────────
@@ -111,6 +169,32 @@ service cloud.firestore {
       allow update: if isOwner(userId);
       allow create: if isAuthenticated() && request.auth.uid == userId;
       allow delete: if false; // only Admin SDK may delete user records
+
+      match /attemptedQuestions/{questionId} {
+        allow read, write: if isOwner(userId);
+      }
+      match /quizSessions/{sessionId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId)
+          && request.resource.data.status == 'completed'
+          && request.resource.data.sessionId == sessionId;
+        allow update, delete: if false;
+      }
+      match /favorites/{wallpaperId} {
+        allow read, write: if isOwner(userId);
+      }
+      match /bookmarks/{storyId} {
+        allow read, write: if isOwner(userId);
+      }
+      match /savedVideos/{videoId} {
+        allow read, write: if isOwner(userId);
+      }
+      match /likedVideos/{videoId} {
+        allow read, write: if isOwner(userId);
+      }
+      match /dislikedVideos/{videoId} {
+        allow read, write: if isOwner(userId);
+      }
     }
 
     // ── Premium users / subscriptions ──────────────────────────────────────

@@ -45,6 +45,20 @@ export async function fetchAdminStats() {
   return parseResponse(res);
 }
 
+export async function fetchWitnessVideoStats() {
+  const res = await fetch("/api/admin/witness-videos/stats", { cache: "no-store" });
+  return parseResponse(res);
+}
+
+export async function reorderAdminItems(collection, items) {
+  const res = await fetch("/api/admin/witness-videos/reorder", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ collection, items }),
+  });
+  return parseResponse(res);
+}
+
 export async function fetchAdminUsers() {
   const res = await fetch("/api/admin/users", { cache: "no-store" });
   return parseResponse(res);

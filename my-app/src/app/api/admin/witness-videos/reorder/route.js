@@ -3,7 +3,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { requireAdminSession } from "../../../../../lib/requireAdminSession";
 import { getAdminDb, isFirebaseAdminConfigured } from "../../../../../lib/firebaseAdmin";
 
-const REORDERABLE_COLLECTIONS = new Set(["witnessCarousel", "witnessVideos"]);
+const REORDERABLE_COLLECTIONS = new Set(["witnessCarousel", "witnessVideos", "bibleBanners", "bibleReadingPlans"]);
 
 /**
  * Batch-updates displayOrder for a set of documents in a single Firestore

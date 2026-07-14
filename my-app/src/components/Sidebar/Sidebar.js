@@ -19,6 +19,11 @@ import {
   Clapperboard,
   GalleryHorizontal,
   BarChart3,
+  Calendar,
+  Sparkles,
+  Image,
+  Bell,
+  TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -31,7 +36,19 @@ const menuItems = [
   { name: "Upload Daily Verse", icon: ClipboardList, path: "/admin/uploads/upload-verse" },
   { name: "Upload Daily Prayer", icon: ClipboardList, path: "/admin/uploads/upload-prayers" },
   {
-    name: "Witness Videos",
+    name: "Bible Management",
+    icon: BookOpen,
+    children: [
+      { name: "Dashboard", icon: BarChart3, path: "/admin/bible" },
+      { name: "Reading Plans", icon: Calendar, path: "/admin/bible/plans" },
+      { name: "Daily Verses", icon: Sparkles, path: "/admin/bible/daily-verses" },
+      { name: "Bible Banners", icon: Image, path: "/admin/bible/banners" },
+      { name: "Announcements", icon: Bell, path: "/admin/bible/announcements" },
+      { name: "Analytics", icon: TrendingUp, path: "/admin/bible/analytics" },
+    ],
+  },
+  {
+    name: "Scripture videos",  
     icon: Clapperboard,
     children: [
       { name: "Dashboard", icon: BarChart3, path: "/admin/witness-videos" },

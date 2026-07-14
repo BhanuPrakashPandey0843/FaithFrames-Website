@@ -10,6 +10,10 @@ export const ADMIN_CONTENT_COLLECTIONS = new Set([
   "featuredStories",   // independent collection for Featured Story module
   "witnessVideos",     // Witness Videos module — video catalogue
   "witnessCarousel",   // Witness Videos module — hero carousel banners
+  "bibleReadingPlans", // Bible Management — reading plans
+  "bibleDailyVerses",  // Bible Management — daily verses
+  "bibleBanners",      // Bible Management — bible banners
+  "bibleAnnouncements",// Bible Management — announcements
 ]);
 
 // ─── Dashboard stats collections ─────────────────────────────────────────────
@@ -91,3 +95,7 @@ export const WITNESS_VIDEO_MAX_SIZE_BYTES = 200 * 1024 * 1024;
 /** Max upload size for banner/thumbnail images, in bytes (5MB). */
 export const WITNESS_IMAGE_MAX_SIZE_BYTES = 5 * 1024 * 1024;
 export const WITNESS_VIDEO_ALLOWED_FORMATS = ["mp4", "mov", "m4v", "webm"];
+
+// ─── Bible Management ───────────────────────────────────────────────────────────
+export const BIBLE_BANNER_CLOUDINARY_FOLDER = "faithframes/bible/banners";
+export const BIBLE_IMAGE_MAX_SIZE_BYTES = 5 * 1024 * 1024;

@@ -6,18 +6,18 @@ export const dynamic = "force-dynamic";
 import Sidebar from "@/components/Sidebar/Sidebar";
 import ContentDashboard from "@/components/Content/ContentDashboard";
 
-export default function BiblePage() {
+export default function WorshipPage() {
   return (
     <div className="flex bg-gray-50 min-h-screen">
       <Sidebar />
       <main className="flex-1 ml-20 md:ml-64 transition-all duration-500">
         <ContentDashboard
-          title="Bible Content Dashboard"
-          contentCollection="bibleContent"
-          carouselCollection="bibleCarousel"
-          dashboardPath="/admin/bible"
-          carouselPath="/admin/bible/carousel"
-          contentPath="/admin/bible/manager"
+          title="Worship Content Dashboard"
+          contentCollection="worshipContent"
+          carouselCollection="worshipCarousel"
+          dashboardPath="/admin/worship"
+          carouselPath="/admin/worship/carousel"
+          contentPath="/admin/worship/manager"
         />
       </main>
     </div>

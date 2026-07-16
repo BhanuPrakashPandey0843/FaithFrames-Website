@@ -1,3 +1,17 @@
+// ─── Firestore collection names ───────────────────────────────────────────────
+export const COLLECTIONS = {
+  witnessVideos: "witnessVideos",
+  witnessCarousel: "witnessCarousel",
+  bibleContent: "bibleContent",
+  bibleCarousel: "bibleCarousel",
+  jesusContent: "jesusContent",
+  jesusCarousel: "jesusCarousel",
+  prayersContent: "prayersContent",
+  prayersCarousel: "prayersCarousel",
+  worshipContent: "worshipContent",
+  worshipCarousel: "worshipCarousel",
+};
+
 // ─── Firestore collections the admin API is allowed to write to ──────────────
 export const ADMIN_CONTENT_COLLECTIONS = new Set([
   "religiousWallpapers",
@@ -14,6 +28,14 @@ export const ADMIN_CONTENT_COLLECTIONS = new Set([
   "bibleDailyVerses",  // Bible Management — daily verses
   "bibleBanners",      // Bible Management — bible banners
   "bibleAnnouncements",// Bible Management — announcements
+  "bibleContent",      // Bible Content module — content catalogue
+  "bibleCarousel",     // Bible Content module — hero carousel banners
+  "jesusContent",      // Jesus Content module — content catalogue
+  "jesusCarousel",     // Jesus Content module — hero carousel banners
+  "prayersContent",    // Prayers Content module — content catalogue
+  "prayersCarousel",   // Prayers Content module — hero carousel banners
+  "worshipContent",    // Worship Content module — content catalogue
+  "worshipCarousel",   // Worship Content module — hero carousel banners
 ]);
 
 // ─── Dashboard stats collections ─────────────────────────────────────────────
@@ -95,6 +117,73 @@ export const WITNESS_VIDEO_MAX_SIZE_BYTES = 200 * 1024 * 1024;
 /** Max upload size for banner/thumbnail images, in bytes (5MB). */
 export const WITNESS_IMAGE_MAX_SIZE_BYTES = 5 * 1024 * 1024;
 export const WITNESS_VIDEO_ALLOWED_FORMATS = ["mp4", "mov", "m4v", "webm"];
+
+// ─── Bible Content ─────────────────────────────────────────────────────────────
+export const BIBLE_CONTENT_THUMBNAIL_CLOUDINARY_FOLDER = "faithframes/bible/thumbnails";
+export const BIBLE_CONTENT_VIDEO_CLOUDINARY_FOLDER     = "faithframes/bible/videos";
+export const BIBLE_CONTENT_BANNER_CLOUDINARY_FOLDER    = "faithframes/bible/banners";
+
+export const BIBLE_CONTENT_CATEGORIES = [
+  "Story",
+  "Message",
+  "Image",
+  "Video",
+  "Study",
+  "General",
+];
+
+// ─── Jesus Content ─────────────────────────────────────────────────────────────
+export const JESUS_CONTENT_THUMBNAIL_CLOUDINARY_FOLDER = "faithframes/jesus/thumbnails";
+export const JESUS_CONTENT_VIDEO_CLOUDINARY_FOLDER     = "faithframes/jesus/videos";
+export const JESUS_CONTENT_BANNER_CLOUDINARY_FOLDER    = "faithframes/jesus/banners";
+
+export const JESUS_CONTENT_CATEGORIES = [
+  "Story",
+  "Message",
+  "Image",
+  "Video",
+  "Study",
+  "General",
+];
+
+// ─── Prayers Content ───────────────────────────────────────────────────────────
+export const PRAYERS_CONTENT_THUMBNAIL_CLOUDINARY_FOLDER = "faithframes/prayers/thumbnails";
+export const PRAYERS_CONTENT_VIDEO_CLOUDINARY_FOLDER     = "faithframes/prayers/videos";
+export const PRAYERS_CONTENT_BANNER_CLOUDINARY_FOLDER    = "faithframes/prayers/banners";
+
+export const PRAYERS_CONTENT_CATEGORIES = [
+  "Story",
+  "Message",
+  "Image",
+  "Video",
+  "Study",
+  "General",
+];
+
+// ─── Worship Content ───────────────────────────────────────────────────────────
+export const WORSHIP_CONTENT_THUMBNAIL_CLOUDINARY_FOLDER = "faithframes/worship/thumbnails";
+export const WORSHIP_CONTENT_VIDEO_CLOUDINARY_FOLDER     = "faithframes/worship/videos";
+export const WORSHIP_CONTENT_BANNER_CLOUDINARY_FOLDER    = "faithframes/worship/banners";
+
+export const WORSHIP_CONTENT_CATEGORIES = [
+  "Story",
+  "Message",
+  "Image",
+  "Video",
+  "Study",
+  "General",
+];
+
+export const CONTENT_TYPE_OPTIONS = [
+  { value: "story", label: "Story" },
+  { value: "message", label: "Message" },
+  { value: "image", label: "Image" },
+  { value: "video", label: "Video" },
+];
+
+export const CONTENT_IMAGE_MAX_SIZE_BYTES = 5 * 1024 * 1024;
+export const CONTENT_VIDEO_MAX_SIZE_BYTES = 200 * 1024 * 1024;
+export const CONTENT_VIDEO_ALLOWED_FORMATS = ["mp4", "mov", "m4v", "webm"];
 
 // ─── Bible Management ───────────────────────────────────────────────────────────
 export const BIBLE_BANNER_CLOUDINARY_FOLDER = "faithframes/bible/banners";

@@ -39,7 +39,9 @@ const menuItems = [
     name: "Bible Management",
     icon: BookOpen,
     children: [
-      { name: "Dashboard", icon: BarChart3, path: "/admin/bible" },
+      { name: "Content Dashboard", icon: BarChart3, path: "/admin/bible" },
+      { name: "Content Carousel", icon: GalleryHorizontal, path: "/admin/bible/carousel" },
+      { name: "Content Manager", icon: FileQuestion, path: "/admin/bible/manager" },
       { name: "Reading Plans", icon: Calendar, path: "/admin/bible/plans" },
       { name: "Daily Verses", icon: Sparkles, path: "/admin/bible/daily-verses" },
       { name: "Bible Banners", icon: Image, path: "/admin/bible/banners" },
@@ -48,12 +50,39 @@ const menuItems = [
     ],
   },
   {
-    name: "Scripture videos",  
+    name: "Scripture videos",
     icon: Clapperboard,
     children: [
       { name: "Dashboard", icon: BarChart3, path: "/admin/witness-videos" },
       { name: "Carousel Manager", icon: GalleryHorizontal, path: "/admin/witness-videos/carousel" },
       { name: "Videos Manager", icon: Video, path: "/admin/witness-videos/videos" },
+    ],
+  },
+  {
+    name: "Jesus Content",
+    icon: Star,
+    children: [
+      { name: "Dashboard", icon: BarChart3, path: "/admin/jesus" },
+      { name: "Carousel Manager", icon: GalleryHorizontal, path: "/admin/jesus/carousel" },
+      { name: "Content Manager", icon: FileQuestion, path: "/admin/jesus/manager" },
+    ],
+  },
+  {
+    name: "Prayers Content",
+    icon: MessageCircle,
+    children: [
+      { name: "Dashboard", icon: BarChart3, path: "/admin/prayers" },
+      { name: "Carousel Manager", icon: GalleryHorizontal, path: "/admin/prayers/carousel" },
+      { name: "Content Manager", icon: FileQuestion, path: "/admin/prayers/manager" },
+    ],
+  },
+  {
+    name: "Worship Content",
+    icon: Video,
+    children: [
+      { name: "Dashboard", icon: BarChart3, path: "/admin/worship" },
+      { name: "Carousel Manager", icon: GalleryHorizontal, path: "/admin/worship/carousel" },
+      { name: "Content Manager", icon: FileQuestion, path: "/admin/worship/manager" },
     ],
   },
   { name: "Witness Testimonials", icon: MessageCircle, path: "/admin/uploads/upload-witness" },

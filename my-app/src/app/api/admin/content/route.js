@@ -218,6 +218,36 @@ function sanitizeWitnessCarouselPayload(data) {
   };
 }
 
+function validateContentPayload(data) {
+  const title = String(data?.title || "").trim();
+  if (!title) return "Title is required.";
+  if (title.length > 150) return "Title must be 150 characters or fewer.";
+  return null;
+}
+
+function sanitizeContentPayload(data, { isCreate }) {
+  const payload = {
+    title: String(data.title).trim(),
+    description: String(data.description || "").trim(),
+    category: String(data.category || "").trim(),
+    contentTypeId: String(data.contentTypeId || "").trim(),
+    thumbnail: String(data.thumbnail || "").trim(),
+    thumbnailPublicId: String(data.thumbnailPublicId || "").trim(),
+    video: String(data.video || "").trim(),
+    videoPublicId: String(data.videoPublicId || "").trim(),
+    isActive: data.isActive !== false,
+    isPremium: data.isPremium === true,
+    scriptPassage: String(data.scriptPassage || "").trim(),
+    displayOrder: Number.isFinite(Number(data.displayOrder)) ? Number(data.displayOrder) : 0,
+  };
+  if (isCreate) {
+    payload.views = 0;
+    payload.likes = 0;
+    payload.dislikes = 0;
+  }
+  return payload;
+}
+
 export async function GET(req) {
   const session = await requireAdminSession(req);
   if (!session) return unauthorized();
@@ -235,7 +265,14 @@ export async function GET(req) {
     const db = getAdminDb();
     let orderField = collection === "religiousWallpapers" ? "uploadedAt" : "createdAt";
     let orderDirection = "desc";
-    if (collection === "witnessCarousel") {
+    const displayOrderCollections = new Set([
+      "witnessCarousel", "witnessVideos",
+      "bibleContent", "bibleCarousel",
+      "jesusContent", "jesusCarousel",
+      "prayersContent", "prayersCarousel",
+      "worshipContent", "worshipCarousel"
+    ]);
+    if (displayOrderCollections.has(collection)) {
       orderField = "displayOrder";
       orderDirection = "asc";
     }
@@ -264,6 +301,8 @@ export async function POST(req) {
   }
 
   let payload = data;
+  const contentCollections = new Set(["bibleContent", "jesusContent", "prayersContent", "worshipContent"]);
+  const carouselCollections = new Set(["bibleCarousel", "jesusCarousel", "prayersCarousel", "worshipCarousel"]);
   if (collection === "questions") {
     const validationError = validateQuestionPayload(data);
     if (validationError) {
@@ -277,6 +316,18 @@ export async function POST(req) {
     }
     payload = sanitizeWitnessVideoPayload(data, { isCreate: true });
   } else if (collection === "witnessCarousel") {
+    const validationError = validateWitnessCarouselPayload(data);
+    if (validationError) {
+      return NextResponse.json({ message: validationError }, { status: 400 });
+    }
+    payload = sanitizeWitnessCarouselPayload(data);
+  } else if (contentCollections.has(collection)) {
+    const validationError = validateContentPayload(data);
+    if (validationError) {
+      return NextResponse.json({ message: validationError }, { status: 400 });
+    }
+    payload = sanitizeContentPayload(data, { isCreate: true });
+  } else if (carouselCollections.has(collection)) {
     const validationError = validateWitnessCarouselPayload(data);
     if (validationError) {
       return NextResponse.json({ message: validationError }, { status: 400 });
@@ -310,6 +361,8 @@ export async function PATCH(req) {
   }
 
   let payload = data;
+  const contentCollections = new Set(["bibleContent", "jesusContent", "prayersContent", "worshipContent"]);
+  const carouselCollections = new Set(["bibleCarousel", "jesusCarousel", "prayersCarousel", "worshipCarousel"]);
   if (collection === "questions") {
     const validationError = validateQuestionPayload(data);
     if (validationError) {
@@ -323,6 +376,18 @@ export async function PATCH(req) {
     }
     payload = sanitizeWitnessVideoPayload(data, { isCreate: false });
   } else if (collection === "witnessCarousel") {
+    const validationError = validateWitnessCarouselPayload(data);
+    if (validationError) {
+      return NextResponse.json({ message: validationError }, { status: 400 });
+    }
+    payload = sanitizeWitnessCarouselPayload(data);
+  } else if (contentCollections.has(collection)) {
+    const validationError = validateContentPayload(data);
+    if (validationError) {
+      return NextResponse.json({ message: validationError }, { status: 400 });
+    }
+    payload = sanitizeContentPayload(data, { isCreate: false });
+  } else if (carouselCollections.has(collection)) {
     const validationError = validateWitnessCarouselPayload(data);
     if (validationError) {
       return NextResponse.json({ message: validationError }, { status: 400 });
@@ -362,11 +427,13 @@ export async function DELETE(req) {
     const db = getAdminDb();
     const docRef = db.collection(collection).doc(id);
 
-    if (collection === "witnessVideos" || collection === "witnessCarousel") {
+    const videoContentCollections = new Set(["witnessVideos", "bibleContent", "jesusContent", "prayersContent", "worshipContent"]);
+    const carouselCollections = new Set(["witnessCarousel", "bibleCarousel", "jesusCarousel", "prayersCarousel", "worshipCarousel"]);
+    if (videoContentCollections.has(collection) || carouselCollections.has(collection)) {
       const snap = await docRef.get();
       const existing = snap.data();
       if (existing) {
-        if (collection === "witnessVideos") {
+        if (videoContentCollections.has(collection)) {
           await Promise.all([
             destroyCloudinaryAsset(existing.videoPublicId, "video"),
             destroyCloudinaryAsset(existing.thumbnailPublicId, "image"),

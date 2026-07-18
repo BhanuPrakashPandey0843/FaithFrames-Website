@@ -25,6 +25,16 @@ rules_version = '2';
 // featuredStories      : authenticated read   | no client write
 // witnessPosts         : authenticated read   | no client write
 // meetSessions         : authenticated read   | no client write
+// witnessCarousel      : authenticated read   | no client write
+// witnessVideos        : authenticated read   | no client write (+/-1 counter nudge)
+// bibleContent         : authenticated read   | no client write (+/-1 counter nudge)
+// jesusContent         : authenticated read   | no client write (+/-1 counter nudge)
+// prayersContent       : authenticated read   | no client write (+/-1 counter nudge)
+// worshipContent       : authenticated read   | no client write (+/-1 counter nudge)
+// bibleCarousel        : authenticated read   | no client write
+// jesusCarousel        : authenticated read   | no client write
+// prayersCarousel      : authenticated read   | no client write
+// worshipCarousel      : authenticated read   | no client write
 // users                : owner read/write     | no other client access
 // premiumUsers         : owner read           | no client write
 // ─────────────────────────────────────────────────────────────────────────────
@@ -161,6 +171,96 @@ service cloud.firestore {
       }
     }
 
+    // ── Explore Faith module (Bible / Jesus / Prayers / Worship) ──────────────
+    // Same shape as the Witness Videos module above: full document CRUD is
+    // Admin SDK only, with a narrow exception letting authenticated users
+    // nudge views/likes/dislikes by at most 1 per write (mirrored client-side
+    // by a Firestore transaction), plus a per-user interaction doc that
+    // records what *this* user has liked/disliked/viewed so those nudges stay
+    // idempotent and mutually exclusive.
+    function isContentCounterUpdate() {
+      return isAuthenticated()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views', 'likes', 'dislikes', 'updatedAt'])
+        && request.resource.data.views is number
+        && request.resource.data.likes is number
+        && request.resource.data.dislikes is number
+        && (request.resource.data.views - resource.data.views) in [-1, 0, 1]
+        && (request.resource.data.likes - resource.data.likes) in [-1, 0, 1]
+        && (request.resource.data.dislikes - resource.data.dislikes) in [-1, 0, 1];
+    }
+
+    function isValidUserInteractionWrite(uid) {
+      return isOwner(uid)
+        && request.resource.data.keys().hasOnly(['liked', 'disliked', 'viewed', 'updatedAt'])
+        && request.resource.data.liked is bool
+        && request.resource.data.disliked is bool
+        && request.resource.data.viewed is bool
+        && !(request.resource.data.liked == true && request.resource.data.disliked == true);
+    }
+
+    match /bibleContent/{contentId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+      allow update: if isContentCounterUpdate();
+
+      match /userInteractions/{uid} {
+        allow read: if isAuthenticated();
+        allow create, update: if isValidUserInteractionWrite(uid);
+        allow delete: if false;
+      }
+    }
+    match /jesusContent/{contentId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+      allow update: if isContentCounterUpdate();
+
+      match /userInteractions/{uid} {
+        allow read: if isAuthenticated();
+        allow create, update: if isValidUserInteractionWrite(uid);
+        allow delete: if false;
+      }
+    }
+    match /prayersContent/{contentId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+      allow update: if isContentCounterUpdate();
+
+      match /userInteractions/{uid} {
+        allow read: if isAuthenticated();
+        allow create, update: if isValidUserInteractionWrite(uid);
+        allow delete: if false;
+      }
+    }
+    match /worshipContent/{contentId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+      allow update: if isContentCounterUpdate();
+
+      match /userInteractions/{uid} {
+        allow read: if isAuthenticated();
+        allow create, update: if isValidUserInteractionWrite(uid);
+        allow delete: if false;
+      }
+    }
+
+    // Hero carousels — fully admin-controlled, read-only for the app.
+    match /bibleCarousel/{bannerId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+    match /jesusCarousel/{bannerId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+    match /prayersCarousel/{bannerId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+    match /worshipCarousel/{bannerId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+
     // ── User profile collection ─────────────────────────────────────────────
     // Each user may read and update only their own document.
     // Admins read all user documents via the Admin SDK (stats, premium-users API).
@@ -193,6 +293,18 @@ service cloud.firestore {
         allow read, write: if isOwner(userId);
       }
       match /dislikedVideos/{videoId} {
+        allow read, write: if isOwner(userId);
+      }
+      match /savedBibleContent/{contentId} {
+        allow read, write: if isOwner(userId);
+      }
+      match /savedJesusContent/{contentId} {
+        allow read, write: if isOwner(userId);
+      }
+      match /savedPrayersContent/{contentId} {
+        allow read, write: if isOwner(userId);
+      }
+      match /savedWorshipContent/{contentId} {
         allow read, write: if isOwner(userId);
       }
     }

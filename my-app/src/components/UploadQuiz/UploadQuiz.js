@@ -43,12 +43,9 @@ const BLANK_FORM = {
 /** Tailwind badge colours per category */
 const CATEGORY_COLORS = {
   "Daily Challenges":    "bg-amber-100 text-amber-800 border-amber-200",
-  "Bible Knowledge Quiz":"bg-purple-100 text-purple-800 border-purple-200",
   "Old Testament Quiz":  "bg-blue-100 text-blue-800 border-blue-200",
   "New Testament Quiz":  "bg-teal-100 text-teal-800 border-teal-200",
   "Jesus Quiz":          "bg-rose-100 text-rose-800 border-rose-200",
-  "Apostle Quiz":        "bg-orange-100 text-orange-800 border-orange-200",
-  "Random Quiz":         "bg-indigo-100 text-indigo-800 border-indigo-200",
 };
 
 const DIFFICULTY_COLORS = {

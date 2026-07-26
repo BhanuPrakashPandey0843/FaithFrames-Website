@@ -83,6 +83,12 @@ service cloud.firestore {
       allow write: if false; // Admin SDK only
     }
 
+    // Inspirational quotes (Library > Quotes tab)
+    match /quotes/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Admin SDK only
+    }
+
     // Regular prophet stories
     match /stories/{docId} {
       allow read: if isAuthenticated();
@@ -127,6 +133,26 @@ service cloud.firestore {
 
     // Study plans collection
     match /studyPlans/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Admin SDK only
+    }
+
+    // ── Bible tab CMS (reading plans, daily verses, banners, announcements) ──
+    // Mirrors src/constants COLLECTIONS.BIBLE_* used by BiblePlansScreen /
+    // BibleHomeScreen — admin-controlled, read-only for the app.
+    match /bibleReadingPlans/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Admin SDK only
+    }
+    match /bibleDailyVerses/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Admin SDK only
+    }
+    match /bibleBanners/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Admin SDK only
+    }
+    match /bibleAnnouncements/{docId} {
       allow read: if isAuthenticated();
       allow write: if false; // Admin SDK only
     }
@@ -307,6 +333,48 @@ service cloud.firestore {
       match /savedWorshipContent/{contentId} {
         allow read, write: if isOwner(userId);
       }
+    }
+
+    // ── User-submitted prayers (Write a Prayer) ─────────────────────────────
+    // Users create their own prayers (status always starts 'pending'); admin
+    // moderation (approve/reject/delete) happens exclusively through the
+    // /api/admin/user-prayers Admin SDK route, which bypasses these rules.
+    match /userPrayers/{prayerId} {
+      // A user may read only their own submissions (mobile "My Prayers" list).
+      allow read: if isOwner(resource.data.userId);
+
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.content is string
+        && request.resource.data.content.size() > 0
+        && request.resource.data.category is string;
+
+      // Status changes (approve/reject) are admin-only — via Admin SDK, not rules.
+      allow update: if false;
+
+      // A user may delete only their own, still-pending submission.
+      allow delete: if isOwner(resource.data.userId);
+    }
+
+    // ── Quiz leaderboards ───────────────────────────────────────────────────
+    // leaderboards/{boardId}/entries/{entryId} — entryId is the submitting
+    // user's uid. Read is authenticated (leaderboard screen); writes are
+    // restricted to the owning user and validated to a safe score/accuracy
+    // range. Mirrors src/services/quizService.js + QUIZ_COLLECTIONS.LEADERBOARDS.
+    match /leaderboards/{boardId}/entries/{entryId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isOwner(entryId)
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.score is number
+        && request.resource.data.score >= 0
+        && request.resource.data.score <= 50000
+        && request.resource.data.accuracy is number
+        && request.resource.data.accuracy >= 0
+        && request.resource.data.accuracy <= 100;
+      allow delete: if false;
     }
 
     // ── Premium users / subscriptions ──────────────────────────────────────

@@ -90,3 +90,34 @@ export async function adminDeleteUser(id) {
   });
   return parseResponse(res);
 }
+
+// ─── User Prayers ────────────────────────────────────────────────────────────
+export async function fetchUserPrayers(params = {}) {
+  const url = new URL("/api/admin/user-prayers", window.location.origin);
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== undefined && v !== null && v !== "") url.searchParams.set(k, String(v));
+  });
+  const res = await fetch(url.toString(), { cache: "no-store" });
+  return parseResponse(res);
+}
+
+export async function fetchUserPrayerStats() {
+  const res = await fetch("/api/admin/user-prayers/stats", { cache: "no-store" });
+  return parseResponse(res);
+}
+
+export async function updateUserPrayer(id, data) {
+  const res = await fetch("/api/admin/user-prayers", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id, data }),
+  });
+  return parseResponse(res);
+}
+
+export async function deleteUserPrayer(id) {
+  const res = await fetch(`/api/admin/user-prayers?id=${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+  return parseResponse(res);
+}

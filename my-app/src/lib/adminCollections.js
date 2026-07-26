@@ -36,6 +36,7 @@ export const ADMIN_CONTENT_COLLECTIONS = new Set([
   "prayersCarousel",   // Prayers Content module — hero carousel banners
   "worshipContent",    // Worship Content module — content catalogue
   "worshipCarousel",   // Worship Content module — hero carousel banners
+  "userPrayers",       // User-submitted prayers module
 ]);
 
 // ─── Dashboard stats collections ─────────────────────────────────────────────
@@ -64,12 +65,9 @@ export const FEATURED_STORY_CLOUDINARY_FOLDER = "faithframes/featured-stories";
  */
 export const QUIZ_CATEGORIES = [
   "Daily Challenges",
-  "Bible Knowledge Quiz",
   "Old Testament Quiz",
   "New Testament Quiz",
   "Jesus Quiz",
-  "Apostle Quiz",
-  "Random Quiz",
 ];
 
 export const QUIZ_DIFFICULTIES = ["easy", "medium", "hard"];
@@ -173,6 +171,35 @@ export const WORSHIP_CONTENT_CATEGORIES = [
   "Study",
   "General",
 ];
+
+// ─── User-Submitted Prayers ───────────────────────────────────────────────────
+export const USER_PRAYERS_COLLECTION = "userPrayers";
+
+export const USER_PRAYER_CATEGORIES = [
+  "Myself",
+  "Family",
+  "Friends",
+  "Marriage",
+  "Children",
+  "Parents",
+  "Health",
+  "Healing",
+  "Education",
+  "Career",
+  "Financial Needs",
+  "Thanksgiving",
+  "Guidance",
+  "Forgiveness",
+  "Protection",
+  "Church",
+  "Community",
+  "Nation",
+  "World Peace",
+  "Salvation",
+  "Other",
+];
+
+export const USER_PRAYER_STATUSES = ["pending", "approved", "rejected"];
 
 export const CONTENT_TYPE_OPTIONS = [
   { value: "story", label: "Story" },

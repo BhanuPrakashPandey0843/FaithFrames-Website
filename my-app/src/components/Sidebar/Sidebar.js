@@ -24,6 +24,7 @@ import {
   Image,
   Bell,
   TrendingUp,
+  Inbox,
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -83,6 +84,16 @@ const menuItems = [
       { name: "Dashboard", icon: BarChart3, path: "/admin/worship" },
       { name: "Carousel Manager", icon: GalleryHorizontal, path: "/admin/worship/carousel" },
       { name: "Content Manager", icon: FileQuestion, path: "/admin/worship/manager" },
+    ],
+  },
+  {
+    name: "User Prayers",
+    icon: Inbox,
+    children: [
+      { name: "Dashboard", icon: BarChart3, path: "/admin/user-prayers" },
+      { name: "Manage Prayers", icon: ClipboardList, path: "/admin/user-prayers/manage" },
+      { name: "Calendar View", icon: Calendar, path: "/admin/user-prayers/calendar" },
+      { name: "Analytics", icon: TrendingUp, path: "/admin/user-prayers/analytics" },
     ],
   },
   { name: "Witness Testimonials", icon: MessageCircle, path: "/admin/uploads/upload-witness" },

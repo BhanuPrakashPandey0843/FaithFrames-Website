@@ -363,7 +363,14 @@ export async function PATCH(req) {
   let payload = data;
   const contentCollections = new Set(["bibleContent", "jesusContent", "prayersContent", "worshipContent"]);
   const carouselCollections = new Set(["bibleCarousel", "jesusCarousel", "prayersCarousel", "worshipCarousel"]);
-  if (collection === "questions") {
+  if (collection === "userPrayers") {
+    // Admin only updates status + updatedAt (and possibly moderation note later)
+    const status = String(data.status || "").trim();
+    if (!["pending", "approved", "rejected"].includes(status)) {
+      return NextResponse.json({ message: 'status must be one of: pending, approved, rejected' }, { status: 400 });
+    }
+    payload = { status };
+  } else if (collection === "questions") {
     const validationError = validateQuestionPayload(data);
     if (validationError) {
       return NextResponse.json({ message: validationError }, { status: 400 });

@@ -34,6 +34,7 @@ export default function ContentDashboard({
   dashboardPath,
   carouselPath,
   contentPath,
+  note,
 }) {
   const [stats, setStats] = useState(null);
   const [error, setError] = useState("");
@@ -92,6 +93,11 @@ export default function ContentDashboard({
               <FileQuestion className="text-indigo-600" /> {title}
             </h1>
             <p className="text-gray-500 mt-1">Manage the hero carousel and content for the mobile app.</p>
+            {note && (
+              <p className="text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mt-3 text-sm max-w-2xl">
+                {note}
+              </p>
+            )}
           </div>
           <div className="flex gap-3">
             <Link

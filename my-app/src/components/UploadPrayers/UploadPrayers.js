@@ -122,9 +122,12 @@ export default function UploadPrayers() {
   return (
     <div className="flex bg-gray-100 min-h-screen">
       <main className="flex-1 ml-20 md:ml-64 p-6 md:p-10 transition-all duration-500">
-        <h1 className="text-3xl font-bold mb-6 text-indigo-700 text-center">
+        <h1 className="text-3xl font-bold mb-2 text-indigo-700 text-center">
           Daily Prayers Admin Panel
         </h1>
+        <p className="text-center text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2 max-w-2xl mx-auto mb-6 text-sm">
+          This is the correct panel for the app's <strong>Library &gt; Prayer Room</strong> screen. Prayers added here appear there immediately.
+        </p>
 
         <form
           onSubmit={handleSubmit}

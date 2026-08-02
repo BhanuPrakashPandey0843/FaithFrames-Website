@@ -22,6 +22,7 @@ export default function PrayersManagerPage() {
           thumbnailCloudinaryFolder={PRAYERS_CONTENT_THUMBNAIL_CLOUDINARY_FOLDER}
           videoCloudinaryFolder={PRAYERS_CONTENT_VIDEO_CLOUDINARY_FOLDER}
           categories={PRAYERS_CONTENT_CATEGORIES}
+          note="Heads up: items added here appear on Home > Explore Faith > Prayer, not on the Library > Prayer Room screen. To add prayers to Prayer Room, use 'Prayer Room (Library screen)' in the sidebar instead."
         />
       </main>
     </div>

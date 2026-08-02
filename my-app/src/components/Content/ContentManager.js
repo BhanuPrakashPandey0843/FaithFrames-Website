@@ -46,6 +46,7 @@ export default function ContentManager({
   thumbnailCloudinaryFolder,
   videoCloudinaryFolder,
   categories,
+  note,
 }) {
   const [items, setItems] = useState([]);
   const [fetching, setFetching] = useState(true);
@@ -260,6 +261,11 @@ export default function ContentManager({
           <FileQuestion className="text-indigo-600" /> {title}
         </h1>
         <p className="text-gray-500 -mt-4">Manage content for this section. Drag items to reorder.</p>
+        {note && (
+          <p className="text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm">
+            {note}
+          </p>
+        )}
 
         <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-3xl shadow-md p-6 md:p-8 space-y-5">
           <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">

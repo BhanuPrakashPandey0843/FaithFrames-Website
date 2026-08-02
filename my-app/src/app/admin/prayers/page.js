@@ -18,6 +18,7 @@ export default function PrayersPage() {
           dashboardPath="/admin/prayers"
           carouselPath="/admin/prayers/carousel"
           contentPath="/admin/prayers/manager"
+          note="This manages the 'Prayer' tile on the app's Home > Explore Faith screen (stories, messages, images, and videos about prayer). It is NOT the same as the app's Library > Prayer Room screen — for that, use the 'Prayer Room (Library screen)' item in the sidebar instead."
         />
       </main>
     </div>

@@ -335,13 +335,37 @@ service cloud.firestore {
       }
     }
 
-    // ── User-submitted prayers (Write a Prayer) ─────────────────────────────
+    // ── User-submitted prayers (Write a Prayer + Community Prayer Requests) ──
     // Users create their own prayers (status always starts 'pending'); admin
     // moderation (approve/reject/delete) happens exclusively through the
     // /api/admin/user-prayers Admin SDK route, which bypasses these rules.
+    // Once a submission is approved it also becomes readable by every
+    // authenticated user, since it now appears in the Prayer Room's
+    // Community Prayer Requests section.
+    function priorPrayCount() {
+      return ('prayCount' in resource.data) ? resource.data.prayCount : 0;
+    }
+    function priorCommentCount() {
+      return ('commentCount' in resource.data) ? resource.data.commentCount : 0;
+    }
+    // Narrow exception letting any authenticated user nudge prayCount by
+    // ±1 ("I'm Praying") or commentCount by +1 (new comment) on an approved
+    // request only — mirrors isContentCounterUpdate() above exactly.
+    function isPrayerEngagementUpdate() {
+      return isAuthenticated()
+        && resource.data.status == 'approved'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['prayCount', 'commentCount', 'updatedAt'])
+        && request.resource.data.prayCount is number
+        && request.resource.data.commentCount is number
+        && (request.resource.data.prayCount - priorPrayCount()) in [-1, 0, 1]
+        && (request.resource.data.commentCount - priorCommentCount()) in [0, 1];
+    }
+
     match /userPrayers/{prayerId} {
-      // A user may read only their own submissions (mobile "My Prayers" list).
-      allow read: if isOwner(resource.data.userId);
+      // A user may always read their own submissions (mobile "My Prayers"
+      // status view, incl. pending/rejected). Any authenticated user may
+      // read a request once it's approved (Community Prayer Requests).
+      allow read: if isOwner(resource.data.userId) || (isAuthenticated() && resource.data.status == 'approved');
 
       allow create: if isAuthenticated()
         && request.resource.data.userId == request.auth.uid
@@ -352,11 +376,35 @@ service cloud.firestore {
         && request.resource.data.content.size() > 0
         && request.resource.data.category is string;
 
-      // Status changes (approve/reject) are admin-only — via Admin SDK, not rules.
-      allow update: if false;
+      // Status changes (approve/reject) stay admin-only, via Admin SDK.
+      // The one client-writable path is the narrow engagement-counter nudge.
+      allow update: if isPrayerEngagementUpdate();
 
       // A user may delete only their own, still-pending submission.
       allow delete: if isOwner(resource.data.userId);
+
+      // One doc per user: has this user tapped "I'm Praying" for this request?
+      match /prayingUsers/{uid} {
+        allow read: if isAuthenticated();
+        allow create, update: if isOwner(uid)
+          && request.resource.data.keys().hasOnly(['praying', 'updatedAt'])
+          && request.resource.data.praying is bool;
+        allow delete: if false;
+      }
+
+      // Encouraging comments on an approved request. Immutable once posted
+      // (no edit/delete) to keep the commentCount counter always accurate.
+      match /comments/{commentId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated()
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.username is string
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 500
+          && request.resource.data.keys().hasOnly(['userId', 'username', 'text', 'createdAt']);
+        allow update, delete: if false;
+      }
     }
 
     // ── Quiz leaderboards ───────────────────────────────────────────────────

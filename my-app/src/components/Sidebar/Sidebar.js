@@ -35,7 +35,7 @@ const menuItems = [
   { name: "Upload Wallpaper", icon: WallpaperIcon, path: "/admin/uploads/upload-wallpaper" },
   { name: "Upload Quiz Question", icon: FileQuestion, path: "/admin/uploads/upload-quiz" },
   { name: "Upload Daily Verse", icon: ClipboardList, path: "/admin/uploads/upload-verse" },
-  { name: "Upload Daily Prayer", icon: ClipboardList, path: "/admin/uploads/upload-prayers" },
+  { name: "Prayer Room (Library screen)", icon: ClipboardList, path: "/admin/uploads/upload-prayers" },
   {
     name: "Bible Management",
     icon: BookOpen,
@@ -69,7 +69,7 @@ const menuItems = [
     ],
   },
   {
-    name: "Prayers Content",
+    name: "Prayers Content (Explore Faith – Home screen)",
     icon: MessageCircle,
     children: [
       { name: "Dashboard", icon: BarChart3, path: "/admin/prayers" },

@@ -16,7 +16,6 @@ import {
   Clock,
   SlidersHorizontal,
   User,
-  Tag,
   CalendarDays,
   FileText,
   RefreshCw,
@@ -26,7 +25,7 @@ import {
   updateUserPrayer,
   deleteUserPrayer,
 } from "../../lib/adminApi";
-import { USER_PRAYER_CATEGORIES } from "../../lib/adminCollections";
+import { todayDisplayDateKey } from "../../lib/prayerSchedule";
 
 const statusBadge = (status) => {
   const map = {
@@ -59,7 +58,6 @@ export default function UserPrayersManager() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("all");
   const [status, setStatus] = useState("all");
   const [sort, setSort] = useState("newest");
   const [dateFilter, setDateFilter] = useState("");
@@ -69,6 +67,8 @@ export default function UserPrayersManager() {
   const [preview, setPreview] = useState(null);
   const [debounced, setDebounced] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [approveTarget, setApproveTarget] = useState(null);
+  const [approveDate, setApproveDate] = useState(todayDisplayDateKey());
 
   // debounce search
   useEffect(() => {
@@ -83,7 +83,6 @@ export default function UserPrayersManager() {
         page,
         pageSize,
         search: debounced,
-        category,
         status,
         sort,
         date: dateFilter,
@@ -96,7 +95,7 @@ export default function UserPrayersManager() {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, debounced, category, status, sort, dateFilter]);
+  }, [page, pageSize, debounced, status, sort, dateFilter]);
 
   useEffect(() => {
     load();
@@ -105,17 +104,28 @@ export default function UserPrayersManager() {
   // reset to page 1 when filter/search/sort changes
   useEffect(() => {
     setPage(1);
-  }, [debounced, category, status, sort, dateFilter, pageSize]);
+  }, [debounced, status, sort, dateFilter, pageSize]);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   const handleStatus = useCallback(
-    async (id, s) => {
+    async (id, s, displayDate) => {
       setBusy(`${id}-${s}`);
       try {
-        await updateUserPrayer(id, { status: s });
-        setItems((prev) => prev.map((p) => (p.id === id ? { ...p, status: s } : p)));
-        setPreview((prev) => (prev && prev.id === id ? { ...prev, status: s } : prev));
+        const payload = { status: s };
+        if (s === "approved") payload.displayDate = displayDate || todayDisplayDateKey();
+        await updateUserPrayer(id, payload);
+        setItems((prev) =>
+          prev.map((p) =>
+            p.id === id ? { ...p, status: s, ...(payload.displayDate ? { displayDate: payload.displayDate } : {}) } : p
+          )
+        );
+        setPreview((prev) =>
+          prev && prev.id === id
+            ? { ...prev, status: s, ...(payload.displayDate ? { displayDate: payload.displayDate } : {}) }
+            : prev
+        );
+        setApproveTarget(null);
       } catch (err) {
         alert(err.message || "Failed to update status.");
       } finally {
@@ -124,6 +134,11 @@ export default function UserPrayersManager() {
     },
     []
   );
+
+  const requestApprove = useCallback((prayer) => {
+    setApproveTarget(prayer);
+    setApproveDate(prayer.displayDate || todayDisplayDateKey());
+  }, []);
 
   const handleDelete = useCallback(
     async (id) => {
@@ -168,13 +183,12 @@ export default function UserPrayersManager() {
             <h1 className="text-4xl font-extrabold text-gray-900 flex items-center gap-2">
               <Inbox className="text-blue-600" /> Manage User Prayers
             </h1>
-            <p className="text-gray-500 mt-1">Review, approve, reject, and delete prayers submitted by your community.</p>
+            <p className="text-gray-500 mt-1">Review and approve prayers. Approved items appear in the app Prayer Room on the display date you choose — this page is moderation, not a second public feed.</p>
           </div>
           <div className="flex gap-2">
             <button
               onClick={() => {
                 setSearch("");
-                setCategory("all");
                 setStatus("all");
                 setDateFilter("");
                 setSort("newest");
@@ -237,7 +251,7 @@ export default function UserPrayersManager() {
             <button
               onClick={() => setFiltersOpen((o) => !o)}
               className={`inline-flex items-center justify-center gap-2 px-5 h-12 rounded-2xl font-semibold border transition ${
-                filtersOpen || category !== "all" || dateFilter
+                filtersOpen || dateFilter
                   ? "bg-blue-600 text-white border-blue-600"
                   : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
               }`}
@@ -254,22 +268,7 @@ export default function UserPrayersManager() {
                 exit={{ height: 0, opacity: 0 }}
                 className="overflow-hidden"
               >
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                  <div>
-                    <label className="text-xs font-semibold text-gray-600 mb-1.5 block">Category</label>
-                    <select
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value)}
-                      className="w-full h-11 px-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-                    >
-                      <option value="all">All Categories</option>
-                      {USER_PRAYER_CATEGORIES.map((c) => (
-                        <option key={c} value={c}>
-                          {c}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <div>
                     <label className="text-xs font-semibold text-gray-600 mb-1.5 block">Status</label>
                     <select
@@ -292,7 +291,7 @@ export default function UserPrayersManager() {
                       className="w-full h-11 px-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
                     />
                   </div>
-                  <div className="md:col-span-3">
+                  <div className="md:col-span-2">
                     <label className="text-xs font-semibold text-gray-600 mb-1.5 block">Sort</label>
                     <div className="flex gap-2 flex-wrap">
                       {SORT_OPTIONS.map((s) => (
@@ -346,9 +345,8 @@ export default function UserPrayersManager() {
           ) : items.length ? (
             <div className="divide-y divide-gray-100">
               <div className="hidden md:grid md:grid-cols-12 px-6 py-4 bg-gradient-to-r from-slate-50 to-white border-b border-gray-100 text-xs font-bold uppercase tracking-wider text-gray-500 gap-4">
-                <div className="col-span-4">Prayer</div>
+                <div className="col-span-6">Prayer</div>
                 <div className="col-span-2">User</div>
-                <div className="col-span-2">Category</div>
                 <div className="col-span-2">Submitted</div>
                 <div className="col-span-2 text-right">Actions</div>
               </div>
@@ -361,7 +359,7 @@ export default function UserPrayersManager() {
                     transition={{ delay: i * 0.03 }}
                     className="grid grid-cols-1 md:grid-cols-12 px-6 py-5 items-center gap-4 hover:bg-slate-50/60 transition"
                   >
-                    <div className="md:col-span-4 min-w-0">
+                    <div className="md:col-span-6 min-w-0">
                       <div className="flex flex-wrap items-center gap-2 mb-1">
                         <h3 className="font-bold text-gray-900 truncate">{p.title}</h3>
                         {statusBadge(p.status)}
@@ -392,17 +390,12 @@ export default function UserPrayersManager() {
                       </div>
                     </div>
                     <div className="md:col-span-2">
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 border border-gray-200 text-xs font-semibold text-gray-700">
-                        <Tag className="w-3 h-3 text-blue-600" /> {p.category}
-                      </div>
-                    </div>
-                    <div className="md:col-span-2">
                       <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-600">
                         <CalendarDays className="w-3.5 h-3.5 text-gray-400" />
                         {p.createdAt ? new Date(p.createdAt).toLocaleDateString() : "—"}
                       </div>
                       <div className="text-[11px] text-gray-400 font-medium mt-0.5">
-                        {p.createdAt ? new Date(p.createdAt).toLocaleTimeString() : ""}
+                        {p.displayDate ? `Shows ${p.displayDate}` : p.createdAt ? new Date(p.createdAt).toLocaleTimeString() : ""}
                       </div>
                     </div>
                     <div className="md:col-span-2">
@@ -416,7 +409,7 @@ export default function UserPrayersManager() {
                         </button>
                         {p.status !== "approved" && (
                           <button
-                            onClick={() => handleStatus(p.id, "approved")}
+                            onClick={() => requestApprove(p)}
                             disabled={!!busy}
                             className="p-2 rounded-xl hover:bg-emerald-50 text-emerald-600 transition disabled:opacity-40"
                             title="Approve"
@@ -552,10 +545,6 @@ export default function UserPrayersManager() {
                         Anonymous
                       </span>
                     )}
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-50 border border-gray-200 text-xs font-semibold text-gray-700">
-                      <Tag className="w-3 h-3 text-blue-600" />
-                      {preview.category}
-                    </span>
                   </div>
                   <h2 className="text-2xl font-extrabold text-gray-900 truncate">{preview.title}</h2>
                   <div className="text-sm text-gray-500 mt-1 flex flex-wrap items-center gap-2">
@@ -598,7 +587,7 @@ export default function UserPrayersManager() {
               <div className="px-6 md:px-8 py-5 border-t border-gray-100 flex flex-wrap items-center justify-end gap-2 bg-slate-50/60">
                 {preview.status !== "approved" && (
                   <button
-                    onClick={() => handleStatus(preview.id, "approved")}
+                    onClick={() => requestApprove(preview)}
                     disabled={!!busy}
                     className="px-5 py-2.5 rounded-2xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition inline-flex items-center gap-2 disabled:opacity-50"
                   >
@@ -635,6 +624,57 @@ export default function UserPrayersManager() {
                     <Trash2 className="w-4 h-4" />
                   )}
                   Delete
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {approveTarget && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setApproveTarget(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.96, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.96, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-6 space-y-4"
+            >
+              <h3 className="text-xl font-extrabold text-gray-900">Approve for Prayer Room</h3>
+              <p className="text-sm text-gray-600">
+                This prayer will appear on the same Prayer Room feed as admin-uploaded prayers, using the same card layout, on the date you choose.
+              </p>
+              <label className="block">
+                <span className="block text-xs font-semibold text-gray-600 mb-1.5">Display date</span>
+                <input
+                  type="date"
+                  value={approveDate}
+                  onChange={(e) => setApproveDate(e.target.value)}
+                  className="w-full h-11 px-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400"
+                />
+              </label>
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setApproveTarget(null)}
+                  className="px-4 py-2.5 rounded-2xl bg-white border border-gray-200 text-gray-700 font-semibold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleStatus(approveTarget.id, "approved", approveDate)}
+                  disabled={!!busy || !approveDate}
+                  className="px-4 py-2.5 rounded-2xl bg-emerald-600 text-white font-semibold disabled:opacity-50"
+                >
+                  Approve & schedule
                 </button>
               </div>
             </motion.div>

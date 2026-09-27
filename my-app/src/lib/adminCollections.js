@@ -175,30 +175,6 @@ export const WORSHIP_CONTENT_CATEGORIES = [
 // ─── User-Submitted Prayers ───────────────────────────────────────────────────
 export const USER_PRAYERS_COLLECTION = "userPrayers";
 
-export const USER_PRAYER_CATEGORIES = [
-  "Myself",
-  "Family",
-  "Friends",
-  "Marriage",
-  "Children",
-  "Parents",
-  "Health",
-  "Healing",
-  "Education",
-  "Career",
-  "Financial Needs",
-  "Thanksgiving",
-  "Guidance",
-  "Forgiveness",
-  "Protection",
-  "Church",
-  "Community",
-  "Nation",
-  "World Peace",
-  "Salvation",
-  "Other",
-];
-
 export const USER_PRAYER_STATUSES = ["pending", "approved", "rejected"];
 
 export const CONTENT_TYPE_OPTIONS = [

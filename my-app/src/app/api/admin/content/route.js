@@ -4,6 +4,57 @@ import { FieldValue } from "firebase-admin/firestore";
 import { requireAdminSession } from "../../../../lib/requireAdminSession";
 import { getAdminDb, isFirebaseAdminConfigured } from "../../../../lib/firebaseAdmin";
 import { ADMIN_CONTENT_COLLECTIONS, QUIZ_CATEGORIES, QUIZ_DIFFICULTIES, WITNESS_VIDEO_CATEGORIES } from "../../../../lib/adminCollections";
+import { normalizeDisplayDate, todayDisplayDateKey } from "../../../../lib/prayerSchedule";
+
+function serializeAdminValue(value) {
+  if (value == null) return value;
+  if (typeof value.toDate === "function") {
+    try {
+      return value.toDate().toISOString();
+    } catch {
+      return null;
+    }
+  }
+  if (Array.isArray(value)) return value.map(serializeAdminValue);
+  if (typeof value === "object") {
+    const ctor = value.constructor?.name;
+    if (ctor && ctor !== "Object") {
+      if (typeof value.toJSON === "function") return value.toJSON();
+      return String(value);
+    }
+    const nested = {};
+    for (const [k, v] of Object.entries(value)) nested[k] = serializeAdminValue(v);
+    return nested;
+  }
+  return value;
+}
+
+function serializeAdminDoc(id, data) {
+  const out = { id };
+  for (const [key, value] of Object.entries(data || {})) {
+    out[key] = serializeAdminValue(value);
+  }
+  return out;
+}
+
+function normalizeImageUrl(url) {
+  const raw = String(url || "").trim();
+  if (!raw) return "";
+  if (raw.startsWith("http://")) return `https://${raw.slice("http://".length)}`;
+  return raw;
+}
+
+function sanitizeDailyPrayerPayload(data, { isCreate }) {
+  const verse = String(data?.verse || "").trim();
+  const reference = String(data?.reference || "").trim();
+  const bgurl = normalizeImageUrl(data?.bgurl || data?.image || data?.imageUrl);
+  const displayDate = normalizeDisplayDate(data?.displayDate) || (isCreate ? todayDisplayDateKey() : null);
+  const payload = { verse, reference };
+  if (bgurl) payload.bgurl = bgurl;
+  if (data?.imagePublicId) payload.imagePublicId = String(data.imagePublicId).trim();
+  if (displayDate) payload.displayDate = displayDate;
+  return payload;
+}
 
 /** Best-effort Cloudinary cleanup — never blocks or fails the Firestore delete. */
 async function destroyCloudinaryAsset(publicId, resourceType) {
@@ -276,11 +327,14 @@ export async function GET(req) {
       orderField = "displayOrder";
       orderDirection = "asc";
     }
-    const snapshot = await db.collection(collection).orderBy(orderField, orderDirection).get();
-    const items = snapshot.docs.map((docSnap) => ({
-      id: docSnap.id,
-      ...docSnap.data(),
-    }));
+    let snapshot;
+    try {
+      snapshot = await db.collection(collection).orderBy(orderField, orderDirection).get();
+    } catch (orderErr) {
+      console.warn("[admin/content GET] orderBy failed, falling back to unordered read:", orderErr?.message);
+      snapshot = await db.collection(collection).get();
+    }
+    const items = snapshot.docs.map((docSnap) => serializeAdminDoc(docSnap.id, docSnap.data()));
     return NextResponse.json({ items });
   } catch (err) {
     console.error("[admin/content GET]", err);
@@ -333,6 +387,12 @@ export async function POST(req) {
       return NextResponse.json({ message: validationError }, { status: 400 });
     }
     payload = sanitizeWitnessCarouselPayload(data);
+  } else if (collection === "dailyPrayers") {
+    const verse = String(data?.verse || "").trim();
+    const reference = String(data?.reference || "").trim();
+    if (!verse) return NextResponse.json({ message: "Prayer text is required." }, { status: 400 });
+    if (!reference) return NextResponse.json({ message: "Reference is required." }, { status: 400 });
+    payload = sanitizeDailyPrayerPayload(data, { isCreate: true });
   }
 
   try {
@@ -370,6 +430,9 @@ export async function PATCH(req) {
       return NextResponse.json({ message: 'status must be one of: pending, approved, rejected' }, { status: 400 });
     }
     payload = { status };
+    if (status === "approved") {
+      payload.displayDate = normalizeDisplayDate(data.displayDate) || todayDisplayDateKey();
+    }
   } else if (collection === "questions") {
     const validationError = validateQuestionPayload(data);
     if (validationError) {
@@ -400,6 +463,12 @@ export async function PATCH(req) {
       return NextResponse.json({ message: validationError }, { status: 400 });
     }
     payload = sanitizeWitnessCarouselPayload(data);
+  } else if (collection === "dailyPrayers") {
+    const verse = String(data?.verse || "").trim();
+    const reference = String(data?.reference || "").trim();
+    if (!verse) return NextResponse.json({ message: "Prayer text is required." }, { status: 400 });
+    if (!reference) return NextResponse.json({ message: "Reference is required." }, { status: 400 });
+    payload = sanitizeDailyPrayerPayload(data, { isCreate: false });
   }
 
   try {

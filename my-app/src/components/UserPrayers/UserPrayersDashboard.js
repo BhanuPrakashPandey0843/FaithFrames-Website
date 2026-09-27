@@ -23,7 +23,6 @@ import {
   updateUserPrayer,
   deleteUserPrayer,
 } from "../../lib/adminApi";
-import { USER_PRAYER_CATEGORIES } from "../../lib/adminCollections";
 
 const STAT_CARDS = [
   { key: "total", label: "Total Prayers", icon: Inbox, color: "from-blue-600 to-blue-500" },
@@ -83,7 +82,7 @@ export default function UserPrayersDashboard() {
     async (id, status) => {
       setBusy(`${id}-${status}`);
       try {
-        await updateUserPrayer(id, { status });
+        await updateUserPrayer(id, { status, ...(status === "approved" ? { displayDate: new Date().toLocaleDateString("en-CA") } : {}) });
         setRecent((prev) =>
           prev.map((p) => (p.id === id ? { ...p, status } : p))
         );
@@ -174,48 +173,6 @@ export default function UserPrayersDashboard() {
           ))}
         </div>
 
-        {/* Category distribution */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
-          className="bg-white rounded-3xl shadow-lg border border-gray-100 p-6 md:p-8"
-        >
-          <h2 className="text-xl font-bold text-gray-900 mb-5">Categories</h2>
-          {loading ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="h-14 rounded-xl bg-gray-100 animate-pulse" />
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-              {USER_PRAYER_CATEGORIES.map((cat) => {
-                const count = stats?.byCategory?.[cat] ?? 0;
-                const total = stats?.total ?? 1;
-                const pct = Math.round((count / total) * 100);
-                return (
-                  <div
-                    key={cat}
-                    className="rounded-2xl p-4 bg-gradient-to-br from-slate-50 to-white border border-gray-100"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm font-semibold text-gray-700 truncate">{cat}</div>
-                      <div className="text-lg font-extrabold text-blue-600">{count}</div>
-                    </div>
-                    <div className="h-2 mt-3 rounded-full bg-gray-100 overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full"
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </motion.div>
-
         {/* Last 7 days bar */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -298,8 +255,6 @@ export default function UserPrayersDashboard() {
                       </div>
                       <div className="text-xs font-medium text-gray-500 flex flex-wrap gap-2">
                         <span>By {p.anonymous ? "Anonymous" : p.username || "Unknown"}</span>
-                        <span>·</span>
-                        <span>{p.category}</span>
                         <span>·</span>
                         <span>{p.createdAt ? new Date(p.createdAt).toLocaleString() : "—"}</span>
                       </div>

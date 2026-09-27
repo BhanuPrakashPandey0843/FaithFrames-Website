@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdminSession } from "../../../../../lib/requireAdminSession";
 import { getAdminDb, isFirebaseAdminConfigured } from "../../../../../lib/firebaseAdmin";
-import { USER_PRAYER_CATEGORIES } from "../../../../../lib/adminCollections";
 
 function startOfDay(d = new Date()) {
   const date = new Date(d);
@@ -21,7 +20,6 @@ export async function GET(req) {
       rejected: 0,
       today: 0,
       thisWeek: 0,
-      byCategory: USER_PRAYER_CATEGORIES.reduce((acc, c) => ({ ...acc, [c]: 0 }), {}),
       byDate: [],
     });
   }
@@ -41,7 +39,6 @@ export async function GET(req) {
     let rejected = 0;
     let today = 0;
     let thisWeek = 0;
-    const byCategory = USER_PRAYER_CATEGORIES.reduce((acc, c) => ({ ...acc, [c]: 0 }), {});
     const byDateMap = new Map();
 
     snap.forEach((doc) => {
@@ -51,10 +48,6 @@ export async function GET(req) {
       if (status === "pending") pending++;
       else if (status === "approved") approved++;
       else if (status === "rejected") rejected++;
-
-      if (data.category && byCategory[data.category] !== undefined) {
-        byCategory[data.category]++;
-      }
 
       const created = data.createdAt ? new Date(data.createdAt.toDate ? data.createdAt.toDate() : data.createdAt) : null;
       if (created && !isNaN(created)) {
@@ -81,7 +74,6 @@ export async function GET(req) {
       rejected,
       today,
       thisWeek,
-      byCategory,
       byDate,
     });
   } catch (err) {

@@ -11,7 +11,6 @@ import {
   Clock,
   X,
   Eye,
-  Tag,
   User,
   FileText,
   Trash2,
@@ -130,7 +129,7 @@ export default function UserPrayersCalendar() {
     async (id, s) => {
       setBusy(`${id}-${s}`);
       try {
-        await updateUserPrayer(id, { status: s });
+        await updateUserPrayer(id, { status: s, ...(s === "approved" ? { displayDate: selectedDate || new Date().toLocaleDateString("en-CA") } : {}) });
         setItems((prev) => prev.map((p) => (p.id === id ? { ...p, status: s } : p)));
         setPreview((prev) => (prev && prev.id === id ? { ...prev, status: s } : prev));
       } catch (err) {
@@ -139,7 +138,7 @@ export default function UserPrayersCalendar() {
         setBusy(null);
       }
     },
-    []
+    [selectedDate]
   );
 
   const handleDelete = useCallback(
@@ -369,10 +368,6 @@ export default function UserPrayersCalendar() {
                       <div className="text-xs font-medium text-gray-500 flex flex-wrap gap-2">
                         <span>By {p.anonymous ? "Anonymous" : p.username || "Unknown"}</span>
                         <span>·</span>
-                        <span className="inline-flex items-center gap-1">
-                          <Tag className="w-3 h-3 text-blue-500" /> {p.category}
-                        </span>
-                        <span>·</span>
                         <span>{p.createdAt ? new Date(p.createdAt).toLocaleTimeString() : "—"}</span>
                       </div>
                       <p className="text-sm text-gray-600 mt-2 line-clamp-2">
@@ -472,10 +467,6 @@ export default function UserPrayersCalendar() {
                         Anonymous
                       </span>
                     )}
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-50 border border-gray-200 text-xs font-semibold text-gray-700">
-                      <Tag className="w-3 h-3 text-blue-600" />
-                      {preview.category}
-                    </span>
                   </div>
                   <h2 className="text-2xl font-extrabold text-gray-900 truncate">{preview.title}</h2>
                   <div className="text-sm text-gray-500 mt-1 flex flex-wrap items-center gap-2">

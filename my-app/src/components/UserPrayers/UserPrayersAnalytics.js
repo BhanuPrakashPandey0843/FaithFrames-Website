@@ -9,11 +9,9 @@ import {
   XCircle,
   TrendingUp,
   Calendar,
-  Tag,
   RefreshCw,
 } from "lucide-react";
 import { fetchUserPrayerStats } from "../../lib/adminApi";
-import { USER_PRAYER_CATEGORIES } from "../../lib/adminCollections";
 
 const STAT_CARDS = [
   { key: "total", label: "Total Prayers", icon: Inbox, color: "from-blue-600 to-blue-500" },
@@ -46,14 +44,6 @@ export default function UserPrayersAnalytics() {
     load();
   }, [load]);
 
-  const sortedCategories = useMemo(() => {
-    const byCat = stats?.byCategory || {};
-    return USER_PRAYER_CATEGORIES.map((c) => ({
-      name: c,
-      count: byCat[c] || 0,
-    })).sort((a, b) => b.count - a.count);
-  }, [stats]);
-
   const total = Math.max(1, stats?.total || 1);
 
   const approvalRate = useMemo(() => {
@@ -75,7 +65,7 @@ export default function UserPrayersAnalytics() {
               <BarChart3 className="text-blue-600" /> Prayer Analytics
             </h1>
             <p className="text-gray-500 mt-1">
-              Track submissions over time, moderation results, and category distribution.
+              Track submissions over time and moderation results.
             </p>
           </div>
           <button
@@ -288,58 +278,6 @@ export default function UserPrayersAnalytics() {
           )}
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-white rounded-3xl shadow-lg border border-gray-100 p-6 md:p-8"
-        >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              <Tag className="w-5 h-5 text-blue-600" /> Category Distribution
-            </h2>
-          </div>
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {Array.from({ length: 10 }).map((_, i) => (
-                <div key={i} className="h-16 rounded-2xl bg-gray-100 animate-pulse" />
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {sortedCategories.map((cat, i) => {
-                const pct = Math.round((cat.count / total) * 100);
-                return (
-                  <div
-                    key={cat.name}
-                    className="rounded-2xl p-4 bg-gradient-to-br from-slate-50 to-white border border-gray-100"
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center">
-                          <span className="text-xs font-extrabold text-white">{i + 1}</span>
-                        </div>
-                        <div className="text-sm font-bold text-gray-800">{cat.name}</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-xl font-extrabold text-gray-900">{cat.count}</div>
-                        <div className="text-[11px] font-semibold text-gray-500">{pct}%</div>
-                      </div>
-                    </div>
-                    <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${pct}%` }}
-                        transition={{ duration: 0.8, delay: i * 0.03 }}
-                        className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-500"
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </motion.div>
       </div>
     </div>
   );

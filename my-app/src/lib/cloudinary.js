@@ -69,7 +69,11 @@ export async function uploadImageToCloudinary(file, folder) {
     throw new Error(data.error?.message || "Cloudinary upload failed");
   }
 
-  return data.secure_url;
+  const url = String(data.secure_url || data.url || "").trim();
+  if (!url) {
+    throw new Error("Cloudinary did not return an image URL");
+  }
+  return url.startsWith("http://") ? `https://${url.slice("http://".length)}` : url;
 }
 
 /**

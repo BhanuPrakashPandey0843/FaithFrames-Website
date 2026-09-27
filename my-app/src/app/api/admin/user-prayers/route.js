@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { requireAdminSession } from "../../../../lib/requireAdminSession";
 import { getAdminDb, isFirebaseAdminConfigured } from "../../../../lib/firebaseAdmin";
-import { USER_PRAYER_CATEGORIES, USER_PRAYER_STATUSES } from "../../../../lib/adminCollections";
+import { USER_PRAYER_STATUSES } from "../../../../lib/adminCollections";
+import { normalizeDisplayDate, todayDisplayDateKey } from "../../../../lib/prayerSchedule";
 
 function toDate(value) {
   if (!value) return null;
@@ -15,6 +16,10 @@ function toDate(value) {
   }
   const d = new Date(value);
   return isNaN(d) ? null : d;
+}
+
+function todayFromDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 function unauthorized() {
@@ -30,7 +35,6 @@ export async function GET(req) {
   const page = Math.max(1, Number(searchParams.get("page")) || 1);
   const pageSize = Math.min(100, Math.max(1, Number(searchParams.get("pageSize")) || 20));
   const search = (searchParams.get("search") || "").trim().toLowerCase();
-  const category = (searchParams.get("category") || "").trim();
   const status = (searchParams.get("status") || "").trim();
   const sort = (searchParams.get("sort") || "newest").toLowerCase();
   const date = (searchParams.get("date") || "").trim(); // YYYY-MM-DD
@@ -53,21 +57,17 @@ export async function GET(req) {
       });
     });
 
-    // Filter by category
-    if (category && category !== "all") {
-      all = all.filter((p) => p.category === category);
-    }
-
     // Filter by status
     if (status && status !== "all") {
       all = all.filter((p) => (p.status || "pending") === status);
     }
 
-    // Filter by date
+    // Filter by submitted date or scheduled display date
     if (date) {
       const dayStart = new Date(date + "T00:00:00");
       const dayEnd = new Date(date + "T23:59:59.999");
       all = all.filter((p) => {
+        if (normalizeDisplayDate(p.displayDate) === date) return true;
         const d = toDate(p.createdAt);
         return d && d >= dayStart && d <= dayEnd;
       });
@@ -80,8 +80,7 @@ export async function GET(req) {
           (p.title || "").toLowerCase().includes(search) ||
           (p.description || "").toLowerCase().includes(search) ||
           (p.content || "").toLowerCase().includes(search) ||
-          (p.username || "").toLowerCase().includes(search) ||
-          (p.category || "").toLowerCase().includes(search)
+          (p.username || "").toLowerCase().includes(search)
         );
       });
     }
@@ -94,6 +93,8 @@ export async function GET(req) {
       ...p,
       createdAt: toDate(p.createdAt)?.toISOString() || null,
       updatedAt: toDate(p.updatedAt)?.toISOString() || null,
+      moderatedAt: toDate(p.moderatedAt)?.toISOString() || null,
+      displayDate: normalizeDisplayDate(p.displayDate) || (toDate(p.createdAt) ? todayFromDate(toDate(p.createdAt)) : null),
     }));
 
     return NextResponse.json({
@@ -101,7 +102,6 @@ export async function GET(req) {
       total,
       page,
       pageSize,
-      categories: USER_PRAYER_CATEGORIES,
       statuses: USER_PRAYER_STATUSES,
     });
   } catch (err) {
@@ -128,21 +128,37 @@ export async function PATCH(req) {
   }
 
   const status = String(data.status || "").trim();
-  if (!USER_PRAYER_STATUSES.includes(status)) {
+  const displayDate = data.displayDate !== undefined ? normalizeDisplayDate(data.displayDate) : undefined;
+
+  if (status && !USER_PRAYER_STATUSES.includes(status)) {
     return NextResponse.json(
       { message: `status must be one of: ${USER_PRAYER_STATUSES.join(", ")}` },
       { status: 400 }
     );
   }
+  if (data.displayDate !== undefined && data.displayDate !== "" && !displayDate) {
+    return NextResponse.json({ message: "displayDate must be YYYY-MM-DD" }, { status: 400 });
+  }
+  if (!status && displayDate === undefined) {
+    return NextResponse.json({ message: "Provide status and/or displayDate" }, { status: 400 });
+  }
 
   try {
     const db = getAdminDb();
-    await db.collection("userPrayers").doc(id).update({
-      status,
-      moderatedAt: FieldValue.serverTimestamp(),
-      moderatedBy: session.email || "admin",
+    const payload = {
       updatedAt: FieldValue.serverTimestamp(),
-    });
+    };
+    if (status) {
+      payload.status = status;
+      payload.moderatedAt = FieldValue.serverTimestamp();
+      payload.moderatedBy = session.email || "admin";
+    }
+    if (status === "approved") {
+      payload.displayDate = displayDate || todayDisplayDateKey();
+    } else if (displayDate) {
+      payload.displayDate = displayDate;
+    }
+    await db.collection("userPrayers").doc(id).update(payload);
     return NextResponse.json({ success: true, id });
   } catch (err) {
     console.error("[admin/user-prayers PATCH]", err);

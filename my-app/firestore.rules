@@ -36,6 +36,7 @@ rules_version = '2';
 // prayersCarousel      : authenticated read   | no client write
 // worshipCarousel      : authenticated read   | no client write
 // users                : owner read/write     | no other client access
+// wallpaper_preferences: owner read/write     | no other client access
 // premiumUsers         : owner read           | no client write
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -335,6 +336,28 @@ service cloud.firestore {
       }
     }
 
+    // ── Wallpaper preferences (mobile: Settings → Wallpaper Settings) ───────
+    // One document per user, keyed by uid — same ownership model as
+    // /users/{userId} above. This collection previously had no match block, so
+    // the catch-all deny at the bottom of this file rejected every read and
+    // write from the Wallpaper Settings screen with "Missing or insufficient
+    // permissions". Shape is validated so the document can only ever hold the
+    // five preference fields the screen actually writes.
+    match /wallpaper_preferences/{userId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId)
+        && request.resource.data.keys().hasOnly([
+          'categories', 'quality', 'downloadPreference',
+          'autoWallpaper', 'smartRecommendations'
+        ])
+        && (!('categories' in request.resource.data) || request.resource.data.categories is map)
+        && (!('quality' in request.resource.data) || request.resource.data.quality is string)
+        && (!('downloadPreference' in request.resource.data) || request.resource.data.downloadPreference is string)
+        && (!('autoWallpaper' in request.resource.data) || request.resource.data.autoWallpaper is string)
+        && (!('smartRecommendations' in request.resource.data) || request.resource.data.smartRecommendations is bool);
+      allow delete: if false;
+    }
+
     // ── User-submitted prayers (Write a Prayer + Community Prayer Requests) ──
     // Users create their own prayers (status always starts 'pending'); admin
     // moderation (approve/reject/delete) happens exclusively through the
@@ -373,8 +396,7 @@ service cloud.firestore {
         && request.resource.data.title is string
         && request.resource.data.title.size() > 0
         && request.resource.data.content is string
-        && request.resource.data.content.size() > 0
-        && request.resource.data.category is string;
+        && request.resource.data.content.size() > 0;
 
       // Status changes (approve/reject) stay admin-only, via Admin SDK.
       // The one client-writable path is the narrow engagement-counter nudge.

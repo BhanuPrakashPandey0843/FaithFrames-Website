@@ -25,6 +25,7 @@ import {
   Bell,
   TrendingUp,
   Inbox,
+  Menu,
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -105,7 +106,11 @@ const menuItems = [
 ];
 
 export default function Sidebar() {
-  const [isOpen, setIsOpen] = useState(true);
+  const [desktopOpen, setIsOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  // On phones the drawer always shows full labels; on desktop the user can collapse it.
+  const isOpen = isMobile || desktopOpen;
   const pathname = usePathname();
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
@@ -114,7 +119,11 @@ export default function Sidebar() {
   );
 
   useEffect(() => {
-    const handleResize = () => setIsOpen(window.innerWidth >= 768);
+    const handleResize = () => {
+      setIsOpen(window.innerWidth >= 768);
+      setIsMobile(window.innerWidth < 768);
+      if (window.innerWidth >= 768) setMobileOpen(false);
+    };
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -124,6 +133,32 @@ export default function Sidebar() {
     const activeGroup = menuItems.find((item) => item.children?.some((c) => pathname === c.path));
     if (activeGroup) setOpenGroup(activeGroup.name);
   }, [pathname]);
+
+  // Lets the global stylesheet remove the page's left margin on phones.
+  useEffect(() => {
+    document.body.classList.add("has-admin-sidebar");
+    return () => document.body.classList.remove("has-admin-sidebar");
+  }, []);
+
+  // Close the drawer after navigating.
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  // While the drawer is open: lock page scroll and close on Escape.
+  useEffect(() => {
+    if (!mobileOpen) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e) => {
+      if (e.key === "Escape") setMobileOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [mobileOpen]);
 
   const handleLogout = async () => {
     if (loggingOut) return;
@@ -138,19 +173,45 @@ export default function Sidebar() {
   };
 
   return (
-    <motion.aside
+    <>
+      {/* Mobile top bar */}
+      <header className="md:hidden fixed top-0 inset-x-0 h-14 z-30 flex items-center gap-3 px-3 bg-white/90 backdrop-blur border-b border-gray-200 shadow-sm">
+        <button
+          type="button"
+          onClick={() => setMobileOpen(true)}
+          aria-label="Open navigation menu"
+          aria-expanded={mobileOpen}
+          className="p-2 -ml-1 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition"
+        >
+          <Menu className="w-6 h-6 text-gray-700" />
+        </button>
+        <span className="text-lg font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+          Faith Frames
+        </span>
+      </header>
+
+      {/* Mobile backdrop */}
+      {mobileOpen && (
+        <div
+          className="md:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-[2px]"
+          onClick={() => setMobileOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      <motion.aside
       initial={{ x: -100, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ type: "spring", stiffness: 80 }}
-      className={`fixed top-0 left-0 h-screen ${
-        isOpen ? "w-64" : "w-20"
+      className={`fixed top-0 left-0 h-dvh ${
+        desktopOpen ? "w-64" : "w-20"} max-md:w-72 max-md:max-w-[85vw] ${mobileOpen ? "max-md:translate-x-0 max-md:shadow-2xl" : "max-md:-translate-x-full"
       } bg-white shadow-xl border-r border-gray-200 text-gray-800 flex flex-col justify-between z-50 transition-all duration-300`}
     >
       {/* Toggle Button Row */}
       <div className="flex-1 overflow-y-auto">
         <div className="flex items-center justify-end px-4 py-4 border-b border-gray-200">
           <button
-            onClick={() => setIsOpen((o) => !o)}
+            onClick={() => (isMobile ? setMobileOpen(false) : setIsOpen((o) => !o))}
             aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
             className="p-2 rounded-lg hover:bg-gray-100 transition"
           >
@@ -284,5 +345,6 @@ export default function Sidebar() {
         )}
       </div>
     </motion.aside>
+    </>
   );
 }

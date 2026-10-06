@@ -2,26 +2,35 @@ import { UserProfile } from "./users";
 
 export interface PremiumUser extends UserProfile {
   isPremium: boolean;
-  premiumPlan: string;          // e.g. "Lifetime Access", "Monthly Pass", "Yearly Devotion"
-  subscriptionStatus: "Active" | "Expired" | "Cancelled";
-  amountPaid: number;           // e.g. 49.99
-  paymentGateway: "Stripe" | "Razorpay" | "Google Play" | "Apple In-App";
+  profileMissing: boolean;      // paid, but the user's profile document no longer exists
+  country?: string;
+  planId: string;               // "yearly_india" | "yearly_international" | ""
+  premiumPlan: string;          // display label, e.g. "Yearly (India)"
+  subscriptionStatus: string;   // display label: Active, Grace Period, Expired, Cancelled, Suspended, ...
+  subscriptionStatusRaw: string;
+  amountPaid: number;           // latest payment, major units (e.g. 10 = ₹10 / $1.00)
+  currency: string;             // ISO code of the latest payment, e.g. "INR", "USD"
+  paymentCount: number;         // completed payments (renewals included)
+  paymentGateway: string;       // "Stripe" | "Razorpay" | ""
   transactionId: string;
-  purchaseDate: string;         // ISO date string
+  purchaseDate: string;         // ISO date string or ""
   expiryDate: string;           // ISO date string or "N/A"
   autoRenewal: boolean;
-  platform: "Android" | "iOS";
+  platform: string;             // "Android" | "iOS" | "" (not recorded for most users)
+  lastLogin: string;
 }
 
 export interface PremiumStats {
   totalPremiumUsers: number;
-  totalRevenue: number;
   activeSubscriptions: number;
-  expiryWarnings: number; // Subscriptions expiring within 7 days
+  expiryWarnings: number; // Active subscriptions expiring within 7 days
+  revenueByCurrency: Record<string, number>; // major units per currency, e.g. { INR: 10, USD: 1 }
+  totalUsers: number;
+  nonPremiumUsers: number;
 }
 
 /**
- * Fetches all premium users.
+ * Fetches every user who has successfully paid for a subscription.
  */
 export async function fetchPremiumUsers(): Promise<PremiumUser[]> {
   try {
@@ -39,7 +48,7 @@ export async function fetchPremiumUsers(): Promise<PremiumUser[]> {
 }
 
 /**
- * Refreshes database state and returns premium users.
+ * Reloads premium users (data is always read live from Firestore).
  */
 export async function refreshPremiumData(): Promise<PremiumUser[]> {
   try {

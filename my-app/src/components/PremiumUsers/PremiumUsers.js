@@ -21,14 +21,35 @@ import {
 } from "lucide-react";
 import { fetchPremiumUsers, fetchPremiumStats, refreshPremiumData } from "../../services/premium";
 import { useToast } from "@/components/ui/Toast";
+import MembershipTabs from "../Membership/MembershipTabs";
+
+// Payments are stored per currency (INR via Razorpay, USD via Stripe), so amounts are never mixed.
+function formatMoney(amount, currency) {
+  const value = Number(amount) || 0;
+  try {
+    return new Intl.NumberFormat(undefined, { style: "currency", currency: currency || "USD" }).format(value);
+  } catch {
+    return `${currency || ""} ${value.toFixed(2)}`.trim();
+  }
+}
+
+function formatDate(value) {
+  const ms = Date.parse(value);
+  if (Number.isNaN(ms)) return "—";
+  return new Date(ms).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+}
+
+const uniqueSorted = (values) => [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b));
 
 export default function PremiumUsers() {
   const [users, setUsers] = useState([]);
   const [stats, setStats] = useState({
     totalPremiumUsers: 0,
-    totalRevenue: 0,
+    revenueByCurrency: {},
     activeSubscriptions: 0,
     expiryWarnings: 0,
+    totalUsers: 0,
+    nonPremiumUsers: 0,
   });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -92,6 +113,17 @@ export default function PremiumUsers() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Filter choices come from the data itself: plans, gateways and platforms depend on what users actually bought.
+  const filterOptions = useMemo(
+    () => ({
+      plans: uniqueSorted(users.map((u) => u.premiumPlan)),
+      statuses: uniqueSorted(users.map((u) => u.subscriptionStatus)),
+      gateways: uniqueSorted(users.map((u) => u.paymentGateway)),
+      platforms: uniqueSorted(users.map((u) => u.platform)),
+    }),
+    [users]
+  );
 
   // Filtering Logic
   const filteredUsers = useMemo(() => {
@@ -192,7 +224,12 @@ export default function PremiumUsers() {
       case "Expired":
         return "bg-rose-50 text-rose-700 border-rose-200/60";
       case "Cancelled":
+      case "Grace Period":
+      case "Renewal Pending":
         return "bg-amber-50 text-amber-700 border-amber-200/60";
+      case "Suspended":
+      case "Refunded":
+        return "bg-rose-50 text-rose-700 border-rose-200/60";
       default:
         return "bg-gray-50 text-gray-700 border-gray-200";
     }
@@ -201,6 +238,12 @@ export default function PremiumUsers() {
   return (
     <div className="space-y-8 bg-gradient-to-br from-slate-50 via-white to-slate-100 min-h-screen pb-12 font-sans">
       
+      <MembershipTabs
+        active="premium"
+        premiumCount={loading ? undefined : stats.totalPremiumUsers}
+        nonPremiumCount={loading ? undefined : stats.nonPremiumUsers}
+      />
+
       {/* ─── Dashboard Header ─── */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <motion.div
@@ -212,7 +255,7 @@ export default function PremiumUsers() {
             Premium Users <Crown className="text-amber-500 fill-amber-400 w-8 h-8 animate-pulse" />
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            Manage memberships, platform distributions, and payment audits.
+            Everyone who has successfully paid for a subscription.
           </p>
         </motion.div>
         
@@ -284,7 +327,15 @@ export default function PremiumUsers() {
               </div>
             </div>
             <div className="mt-4">
-              <span className="text-3xl font-black text-gray-900">${stats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+              <div className="text-2xl font-black text-gray-900 space-y-0.5">
+                {Object.keys(stats.revenueByCurrency || {}).length === 0 ? (
+                  <span>—</span>
+                ) : (
+                  Object.entries(stats.revenueByCurrency).map(([currency, amount]) => (
+                    <div key={currency}>{formatMoney(amount, currency)}</div>
+                  ))
+                )}
+              </div>
               <div className="text-xs text-emerald-600 font-semibold mt-1">
                 Verified payment gateways
               </div>
@@ -379,9 +430,9 @@ export default function PremiumUsers() {
               className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
             >
               <option value="All">All Plans</option>
-              <option value="Lifetime Access">Lifetime Access</option>
-              <option value="Monthly Pass">Monthly Pass</option>
-              <option value="Yearly Devotion">Yearly Devotion</option>
+              {filterOptions.plans.map((plan) => (
+                <option key={plan} value={plan}>{plan}</option>
+              ))}
             </select>
           </div>
 
@@ -394,9 +445,9 @@ export default function PremiumUsers() {
               className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
             >
               <option value="All">All Statuses</option>
-              <option value="Active">Active</option>
-              <option value="Expired">Expired</option>
-              <option value="Cancelled">Cancelled</option>
+              {filterOptions.statuses.map((status) => (
+                <option key={status} value={status}>{status}</option>
+              ))}
             </select>
           </div>
 
@@ -409,10 +460,9 @@ export default function PremiumUsers() {
               className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
             >
               <option value="All">All Gateways</option>
-              <option value="Stripe">Stripe</option>
-              <option value="Razorpay">Razorpay</option>
-              <option value="Google Play">Google Play</option>
-              <option value="Apple In-App">Apple In-App</option>
+              {filterOptions.gateways.map((gateway) => (
+                <option key={gateway} value={gateway}>{gateway}</option>
+              ))}
             </select>
           </div>
 
@@ -425,8 +475,9 @@ export default function PremiumUsers() {
               className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
             >
               <option value="All">All Platforms</option>
-              <option value="Android">Android</option>
-              <option value="iOS">iOS</option>
+              {filterOptions.platforms.map((platform) => (
+                <option key={platform} value={platform}>{platform}</option>
+              ))}
             </select>
           </div>
         </div>
@@ -570,12 +621,15 @@ export default function PremiumUsers() {
                         </span>
                       </td>
                       <td className="p-4">
-                        <span className="font-extrabold text-gray-900">${user.amountPaid.toFixed(2)}</span>
+                        <span className="font-extrabold text-gray-900">{formatMoney(user.amountPaid, user.currency)}</span>
+                        {user.paymentCount > 1 && (
+                          <div className="text-xs text-gray-400">{user.paymentCount} payments</div>
+                        )}
                       </td>
                       <td className="p-4">
                         <div className="flex items-center gap-1 font-semibold text-gray-700">
                           <CreditCard className="w-3.5 h-3.5 text-gray-400" />
-                          {user.paymentGateway}
+                          {user.paymentGateway || "—"}
                         </div>
                         <div className="text-xs font-mono text-gray-400 select-all truncate max-w-[120px]" title={user.transactionId}>
                           {user.transactionId}
@@ -584,11 +638,7 @@ export default function PremiumUsers() {
                       <td className="p-4 text-xs text-gray-500">
                         <div className="flex items-center gap-1">
                           <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                          {new Date(user.purchaseDate).toLocaleDateString(undefined, {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          })}
+                          {formatDate(user.purchaseDate)}
                         </div>
                       </td>
                       <td className="p-4 text-xs text-gray-500 font-semibold">
@@ -597,11 +647,7 @@ export default function PremiumUsers() {
                         ) : (
                           <div className="flex items-center gap-1">
                             <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                            {new Date(user.expiryDate).toLocaleDateString(undefined, {
-                              year: "numeric",
-                              month: "short",
-                              day: "numeric",
-                            })}
+                            {formatDate(user.expiryDate)}
                           </div>
                         )}
                         {user.autoRenewal && (
@@ -611,7 +657,7 @@ export default function PremiumUsers() {
                       <td className="p-4 pr-6">
                         <span className="inline-flex items-center gap-1 text-xs font-bold text-gray-500 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-xl">
                           <Smartphone className="w-3.5 h-3.5 text-gray-400" />
-                          {user.platform}
+                          {user.platform || "—"}
                         </span>
                       </td>
                     </motion.tr>
@@ -660,7 +706,7 @@ export default function PremiumUsers() {
                     </div>
                     <div>
                       <span className="block text-gray-400 font-semibold mb-0.5">Amount Paid</span>
-                      <span className="font-extrabold text-gray-900">${user.amountPaid.toFixed(2)}</span>
+                      <span className="font-extrabold text-gray-900">{formatMoney(user.amountPaid, user.currency)}</span>
                     </div>
                     <div>
                       <span className="block text-gray-400 font-semibold mb-0.5">Transaction ID</span>
@@ -672,26 +718,26 @@ export default function PremiumUsers() {
                       <span className="block text-gray-400 font-semibold mb-0.5">Payment Gateway</span>
                       <span className="font-bold text-gray-800 flex items-center gap-1">
                         <CreditCard className="w-3 h-3 text-gray-400" />
-                        {user.paymentGateway}
+                        {user.paymentGateway || "—"}
                       </span>
                     </div>
                     <div>
                       <span className="block text-gray-400 font-semibold mb-0.5">Purchase Date</span>
                       <span className="font-semibold text-gray-800">
-                        {new Date(user.purchaseDate).toLocaleDateString()}
+                        {formatDate(user.purchaseDate)}
                       </span>
                     </div>
                     <div>
                       <span className="block text-gray-400 font-semibold mb-0.5">Expiry Date</span>
                       <span className="font-semibold text-gray-800">
-                        {user.expiryDate === "N/A" ? "Never (Lifetime)" : new Date(user.expiryDate).toLocaleDateString()}
+                        {user.expiryDate === "N/A" ? "Never" : formatDate(user.expiryDate)}
                       </span>
                     </div>
                     <div>
                       <span className="block text-gray-400 font-semibold mb-0.5">Platform</span>
                       <span className="inline-flex items-center gap-1 font-bold text-gray-500 bg-gray-50 border border-gray-150 px-2 py-0.5 rounded-lg mt-0.5">
                         <Smartphone className="w-3 h-3" />
-                        {user.platform}
+                        {user.platform || "—"}
                       </span>
                     </div>
                     {user.phoneNumber && (

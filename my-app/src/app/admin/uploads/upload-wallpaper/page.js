@@ -15,7 +15,7 @@ export default function AdminPage() {
       <Sidebar />
 
       {/* Main Content */}
-      <main className="flex-1 ml-20 md:ml-64 p-6 md:p-10 transition-all duration-500">
+      <main className="flex-1 min-w-0 ml-20 md:ml-64 p-2 sm:p-6 md:p-10 transition-all duration-500">
         <UploadWallpaper />
       </main>
     </div>

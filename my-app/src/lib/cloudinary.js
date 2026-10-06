@@ -6,7 +6,7 @@ export const CLOUDINARY_UPLOAD_PRESET =
 
 export const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
 
-async function getSignedUploadParams(folder) {
+async function requestUploadSignature(folder) {
   try {
     const response = await fetch("/api/admin/cloudinary-sign", {
       method: "POST",
@@ -14,14 +14,23 @@ async function getSignedUploadParams(folder) {
       body: JSON.stringify({ folder }),
     });
 
+    const body = await response.json().catch(() => ({}));
     if (!response.ok) {
-      return null;
+      return {
+        data: null,
+        error: body?.message || `Signature request failed (HTTP ${response.status}).`,
+      };
     }
 
-    return response.json();
-  } catch {
-    return null;
+    return { data: body, error: "" };
+  } catch (err) {
+    return { data: null, error: err?.message || "Network error while requesting the signature." };
   }
+}
+
+async function getSignedUploadParams(folder) {
+  const { data } = await requestUploadSignature(folder);
+  return data;
 }
 
 export async function uploadImageToCloudinary(file, folder) {
@@ -98,9 +107,9 @@ export function uploadVideoToCloudinary(file, folder, onProgress) {
       throw new Error("Video must be smaller than 200MB");
     }
 
-    const signed = await getSignedUploadParams(folder);
+    const { data: signed, error: signError } = await requestUploadSignature(folder);
     if (!signed?.signature) {
-      throw new Error("Could not get an upload signature. Check Cloudinary server credentials.");
+      throw new Error(`Could not get an upload signature: ${signError || "no signature returned"}`);
     }
 
     const uploadUrl = `https://api.cloudinary.com/v1_1/${signed.cloudName}/video/upload`;

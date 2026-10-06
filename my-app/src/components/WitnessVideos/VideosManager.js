@@ -386,14 +386,14 @@ export default function VideosManager() {
   useEffect(() => setPage(1), [search, categoryFilter, statusFilter, sortBy]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white p-6 md:p-10">
-      <div className="max-w-7xl mx-auto space-y-8">
-        <h1 className="text-4xl font-extrabold text-gray-900 flex items-center gap-3">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white p-1 sm:p-6 md:p-10">
+      <div className="max-w-7xl mx-auto space-y-5 sm:space-y-8">
+        <h1 className="text-2xl sm:text-4xl font-extrabold text-gray-900 flex items-center gap-3">
           <Video className="text-indigo-600" /> Videos Manager
         </h1>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-3xl shadow-md p-6 md:p-8 space-y-5">
+        <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-3xl shadow-md p-4 sm:p-6 md:p-8 space-y-5">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold text-gray-900">{editingId ? "Edit Video" : "Upload New Video"}</h2>
             {draftRestored && !editingId && (
@@ -498,7 +498,7 @@ export default function VideosManager() {
             </div>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-5">
+          <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Tags (comma separated)</label>
               <input
@@ -560,7 +560,7 @@ export default function VideosManager() {
 
           {error && <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-red-700 text-sm">{error}</div>}
 
-          <div className="flex gap-3">
+          <div className="flex flex-col-reverse sm:flex-row gap-3">
             <button
               type="submit"
               disabled={saving || uploading}
@@ -578,8 +578,8 @@ export default function VideosManager() {
         </form>
 
         {/* Toolbar */}
-        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-4 flex flex-wrap gap-3 items-center">
-          <div className="relative flex-1 min-w-[220px]">
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-3 sm:p-4 flex flex-wrap gap-3 items-center">
+          <div className="relative basis-full sm:basis-auto sm:flex-1 sm:min-w-[220px]">
             <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               value={search}
@@ -588,16 +588,16 @@ export default function VideosManager() {
               className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-400"
             />
           </div>
-          <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="px-3 py-2.5 border border-gray-200 rounded-xl bg-white outline-none">
+          <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="flex-1 sm:flex-none min-w-[140px] px-3 py-2.5 border border-gray-200 rounded-xl bg-white outline-none">
             <option value="all">All Categories</option>
             {WITNESS_VIDEO_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2.5 border border-gray-200 rounded-xl bg-white outline-none">
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="flex-1 sm:flex-none min-w-[140px] px-3 py-2.5 border border-gray-200 rounded-xl bg-white outline-none">
             <option value="all">All Status</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
           </select>
-          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="px-3 py-2.5 border border-gray-200 rounded-xl bg-white outline-none">
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="flex-1 sm:flex-none min-w-[140px] px-3 py-2.5 border border-gray-200 rounded-xl bg-white outline-none">
             <option value="newest">Newest First</option>
             <option value="oldest">Oldest First</option>
             <option value="mostViewed">Most Viewed</option>
@@ -613,7 +613,7 @@ export default function VideosManager() {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="bg-indigo-600 text-white rounded-2xl p-4 flex items-center gap-4 shadow-lg"
+              className="bg-indigo-600 text-white rounded-2xl p-4 flex flex-wrap items-center gap-2 sm:gap-4 shadow-lg"
             >
               <span className="font-semibold">{selected.size} selected</span>
               <button onClick={() => bulkSetActive(true)} className="px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 transition text-sm font-semibold">Activate</button>
@@ -633,7 +633,7 @@ export default function VideosManager() {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="bg-gray-900 text-white rounded-2xl p-4 flex items-center gap-4 shadow-lg"
+              className="bg-gray-900 text-white rounded-2xl p-4 flex flex-wrap items-center gap-2 sm:gap-4 shadow-lg"
             >
               <span>Deleted &quot;{pendingDelete.video.title}&quot;.</span>
               <button onClick={undoDelete} className="ml-auto flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 transition text-sm font-semibold">
@@ -652,7 +652,69 @@ export default function VideosManager() {
           ) : paged.length === 0 ? (
             <div className="text-center py-16 text-gray-400">No videos match your filters.</div>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+            {/* Phone layout: one card per video */}
+            <div className="md:hidden divide-y divide-gray-100">
+              {paged.map((video) => (
+                <div key={video.id} className="p-3 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => toggleSelect(video.id)}
+                    aria-label="Select video"
+                    className="self-start pt-1"
+                  >
+                    {selected.has(video.id) ? <CheckSquare className="w-5 h-5 text-indigo-600" /> : <Square className="w-5 h-5 text-gray-300" />}
+                  </button>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setPreviewVideo(video)}
+                        aria-label="Preview video"
+                        className="relative w-24 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0"
+                      >
+                        {video.thumbnail ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-300"><Video className="w-5 h-5" /></div>
+                        )}
+                        <div className="absolute inset-0 bg-black/25 flex items-center justify-center">
+                          <PlayCircle className="w-6 h-6 text-white" />
+                        </div>
+                        {video.featured && <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400 absolute top-1 right-1" />}
+                      </button>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-gray-900 line-clamp-2 break-words">{video.title}</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {video.category} · {formatDuration(video.duration)} · {(video.views || 0).toLocaleString()} views
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleToggle(video, "isActive")}
+                        className={`text-xs font-bold px-3 py-1.5 rounded-full transition ${video.isActive !== false ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-500"}`}
+                      >
+                        {video.isActive !== false ? "Active" : "Inactive"}
+                      </button>
+                      <div className="flex items-center gap-2">
+                        <button type="button" onClick={() => startEdit(video)} className="p-2.5 rounded-lg bg-amber-100 text-amber-700 active:bg-amber-200 transition" aria-label="Edit">
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button type="button" onClick={() => requestDelete(video)} className="p-2.5 rounded-lg bg-red-100 text-red-600 active:bg-red-200 transition" aria-label="Delete">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Tablet / desktop layout: table */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
                   <tr>
@@ -719,6 +781,7 @@ export default function VideosManager() {
                 </tbody>
               </table>
             </div>
+            </>
           )}
         </div>
 
@@ -751,7 +814,7 @@ export default function VideosManager() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-6"
+            className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-3 sm:p-6"
             onClick={() => setPreviewVideo(null)}
           >
             <motion.div
@@ -762,7 +825,7 @@ export default function VideosManager() {
               className="bg-white rounded-3xl overflow-hidden max-w-2xl w-full"
             >
               <video src={previewVideo.videoUrl} controls autoPlay className="w-full max-h-[60vh] bg-black" />
-              <div className="p-6">
+              <div className="p-4 sm:p-6">
                 <h3 className="text-xl font-bold text-gray-900">{previewVideo.title}</h3>
                 <p className="text-gray-500 mt-1">{previewVideo.description}</p>
                 <button onClick={() => setPreviewVideo(null)} className="mt-4 px-5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 font-semibold text-gray-700">

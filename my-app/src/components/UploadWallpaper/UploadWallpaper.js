@@ -4,6 +4,7 @@ import { uploadImageToCloudinary } from "../../lib/cloudinary";
 import { validateImageFile, validateRequiredText } from "../../lib/validation";
 import { adminCreate, adminDelete, fetchAdminContent } from "../../lib/adminApi";
 import { useToast } from "@/components/ui/Toast";
+import BulkUploadWallpapers from "./BulkUploadWallpapers";
 
 const UploadWallpaper = () => {
   const [title, setTitle] = useState("");
@@ -14,6 +15,7 @@ const UploadWallpaper = () => {
   const [error, setError] = useState("");
   const [wallpapers, setWallpapers] = useState([]);
   const { addToast } = useToast();
+  const [mode, setMode] = useState("single");
 
   const loadWallpapers = useCallback(async () => {
     setFetching(true);
@@ -93,15 +95,40 @@ const UploadWallpaper = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white p-6 md:p-12 font-sans">
+    <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white p-2 sm:p-6 md:p-12 font-sans">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl md:text-5xl font-bold mb-8 text-gray-900 text-center bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+        <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold mb-6 sm:mb-8 text-gray-900 text-center bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
           Wallpaper Manager
         </h1>
 
+        {/* Upload Mode Selector */}
+        <div className="flex justify-center mb-8">
+          <div className="flex w-full sm:w-auto sm:inline-flex bg-white border border-gray-200 rounded-2xl shadow-sm p-1" role="tablist" aria-label="Upload mode">
+            {[
+              { key: "single", label: "Single Upload" },
+              { key: "bulk", label: "Bulk Upload" },
+            ].map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                role="tab"
+                aria-selected={mode === opt.key}
+                onClick={() => setMode(opt.key)}
+                className={`flex-1 sm:flex-none px-4 sm:px-6 py-3 rounded-xl font-semibold transition ${
+                  mode === opt.key
+                    ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow"
+                    : "text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Upload Form Section */}
-        <div className="mb-12">
-          <div className="bg-white border border-gray-200 rounded-3xl shadow-lg p-6 md:p-10 hover:shadow-xl transition">
+        <div className={`mb-12 ${mode === "single" ? "" : "hidden"}`}>
+          <div className="bg-white border border-gray-200 rounded-3xl shadow-lg p-4 sm:p-6 md:p-10 hover:shadow-xl transition">
             <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
               <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -125,7 +152,7 @@ const UploadWallpaper = () => {
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Select Image</label>
-                <div className={`border-2 border-dashed rounded-2xl p-8 text-center transition ${image ? 'border-indigo-400 bg-indigo-50' : 'border-gray-300 hover:border-indigo-400 hover:bg-gray-50'}`}>
+                <div className={`border-2 border-dashed rounded-2xl p-4 sm:p-8 text-center transition ${image ? 'border-indigo-400 bg-indigo-50' : 'border-gray-300 hover:border-indigo-400 hover:bg-gray-50'}`}>
                   {imagePreview ? (
                     <div className="space-y-4">
                       <img src={imagePreview} alt="Preview" className="max-h-64 mx-auto rounded-xl shadow-lg" />
@@ -192,6 +219,11 @@ const UploadWallpaper = () => {
           </div>
         </div>
 
+        {/* Bulk Upload Section */}
+        <div className={mode === "bulk" ? "" : "hidden"}>
+          <BulkUploadWallpapers onUploaded={loadWallpapers} />
+        </div>
+
         {/* Wallpapers Gallery Section */}
         <div>
           <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
@@ -218,7 +250,7 @@ const UploadWallpaper = () => {
               <p className="text-gray-400 mt-2">Upload your first wallpaper above!</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
               {wallpapers.map((wallpaper) => (
                 <div key={wallpaper.id} className="group bg-white rounded-3xl shadow-md overflow-hidden border border-gray-200 hover:shadow-2xl transition-all duration-300">
                   <div className="relative aspect-[4/3] overflow-hidden">
@@ -231,7 +263,7 @@ const UploadWallpaper = () => {
                         </svg>
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity duration-300">
                       <button
                         onClick={() => handleDelete(wallpaper.id)}
                         className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-3/4 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg transition"
@@ -240,7 +272,7 @@ const UploadWallpaper = () => {
                       </button>
                     </div>
                   </div>
-                  <div className="p-6">
+                  <div className="p-4 sm:p-6">
                     <h3 className="text-xl font-bold text-gray-900 truncate">{wallpaper.title}</h3>
                     {wallpaper.createdAt && (
                       <p className="text-sm text-gray-500 mt-2">

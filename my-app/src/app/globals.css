@@ -30,3 +30,12 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Admin layout on phones: the sidebar becomes an off-canvas drawer (see Sidebar.js),
+   so page content uses the full width and clears the fixed top bar. */
+@media (max-width: 767px) {
+  body.has-admin-sidebar main {
+    margin-left: 0;
+    padding: 4.25rem 0.75rem 1.5rem;
+  }
+}

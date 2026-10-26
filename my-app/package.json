@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:bible": "node --experimental-default-type=module --test src/lib/bibleContent.test.mjs",
+    "test:notifications": "node --experimental-default-type=module --test src/lib/notifications/__tests__/validation.test.mjs"
   },
   "dependencies": {
     "@netlify/plugin-nextjs": "^5.11.6",

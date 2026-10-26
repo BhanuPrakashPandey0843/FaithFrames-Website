@@ -43,11 +43,95 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // The mobile Bible reader may fetch only the shared book catalog and
+    // published translation chapters. Admin reads and all writes use the
+    // authenticated Next.js API with the Firebase Admin SDK.
+    match /bibleBooks/{bookId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /bibleChapters/{chapterId} {
+      allow read: if resource.data.status == 'published';
+      allow write: if false;
+    }
+
+    match /bibleChapterDrafts/{chapterId} {
+      allow read, write: if false;
+    }
+
     // ── Helper functions ────────────────────────────────────────────────────
 
     // True when the caller has a valid Firebase Auth token
     function isAuthenticated() {
       return request.auth != null;
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if false;
+      allow update: if isAuthenticated()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'readAt']);
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    match /notification_preferences/{userId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId)
+        && request.resource.data.keys().hasOnly([
+          'version', 'pushEnabled', 'push', 'inApp', 'updatedAt',
+          'dailyVerse', 'prayerReminder', 'bibleReading', 'quizReminder', 'newWallpaper',
+          'community', 'appUpdates', 'promo', 'premium'
+        ])
+        && (!('pushEnabled' in request.resource.data) || request.resource.data.pushEnabled is bool)
+        && (!('push' in request.resource.data) || request.resource.data.push is map)
+        && (!('inApp' in request.resource.data) || request.resource.data.inApp is map);
+      allow delete: if false;
+    }
+
+    match /pushTokens/{tokenId} {
+      allow read: if isAuthenticated()
+        && (!exists(/databases/$(database)/documents/pushTokens/$(tokenId))
+          || resource.data.ownerUid == request.auth.uid);
+      allow create: if isAuthenticated()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.token == tokenId
+        && request.resource.data.token is string
+        && request.resource.data.token.size() <= 200
+        && request.resource.data.active is bool
+        && request.resource.data.platform in ['android', 'ios']
+        && request.resource.data.keys().hasOnly([
+          'ownerUid', 'token', 'active', 'platform', 'createdAt', 'updatedAt'
+        ]);
+      allow update: if isAuthenticated()
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.token == tokenId
+        && request.resource.data.token is string
+        && request.resource.data.token.size() <= 200
+        && request.resource.data.active is bool
+        && request.resource.data.platform in ['android', 'ios']
+        && request.resource.data.keys().hasOnly([
+          'ownerUid', 'token', 'active', 'platform', 'createdAt', 'updatedAt'
+        ]);
+      allow delete: if isAuthenticated() && resource.data.ownerUid == request.auth.uid;
+    }
+
+    match /notificationCampaigns/{campaignId} {
+      allow read, write: if false;
+    }
+    match /notificationDeliveries/{deliveryId} {
+      allow read, write: if false;
+    }
+    match /notificationSettings/{settingId} {
+      allow read, write: if false;
+    }
+    match /notificationRateLimits/{limitId} {
+      allow read, write: if false;
+    }
+    match /notificationIdempotency/{requestId} {
+      allow read, write: if false;
     }
 
     // True when the caller's uid matches the document owner field
@@ -299,6 +383,15 @@ service cloud.firestore {
 
       match /attemptedQuestions/{questionId} {
         allow read, write: if isOwner(userId);
+      }
+      match /notifications/{notificationId} {
+        allow read: if isOwner(userId);
+        allow create: if false;
+        allow update: if isOwner(userId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'read', 'readAt', 'opened', 'openedAt'
+          ]);
+        allow delete: if isOwner(userId);
       }
       match /quizSessions/{sessionId} {
         allow read: if isOwner(userId);

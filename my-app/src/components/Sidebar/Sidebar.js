@@ -42,6 +42,7 @@ const menuItems = [
     icon: BookOpen,
     children: [
       { name: "Content Dashboard", icon: BarChart3, path: "/admin/bible" },
+      { name: "Hindi & Telugu Translations", icon: BookOpen, path: "/admin/bible/translations" },
       { name: "Content Carousel", icon: GalleryHorizontal, path: "/admin/bible/carousel" },
       { name: "Content Manager", icon: FileQuestion, path: "/admin/bible/manager" },
       { name: "Reading Plans", icon: Calendar, path: "/admin/bible/plans" },
@@ -101,8 +102,9 @@ const menuItems = [
   { name: "Upload Meet-Share", icon: Video, path: "/admin/uploads/upload-meetShare" },
   { name: "Upload Faith Stories", icon: BookOpen, path: "/admin/uploads/upload-stories" },
   { name: "Upload Women of the Bible Story", icon: Star, path: "/admin/uploads/upload-featured-story" },
+  { name: "Notifications", icon: Bell, path: "/admin/notifications" },
   { name: "Premium Users", icon: Crown, path: "/admin/premium-users" },
-  { name: "Profile", icon: User, path: "/admin/uploads/profile" },
+  { name: "Profile (Non-Premium)", icon: User, path: "/admin/uploads/profile" },
 ];
 
 export default function Sidebar() {

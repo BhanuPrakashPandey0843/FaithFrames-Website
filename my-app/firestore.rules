@@ -52,7 +52,12 @@ service cloud.firestore {
     }
 
     match /bibleChapters/{chapterId} {
-      allow read: if resource.data.status == 'published';
+      // Single-document reads of a chapter that doesn't exist yet have
+      // resource == null; without the null check the rule errors and the app
+      // gets permission-denied instead of a clean "not found" (e.g. Telugu
+      // chapters that haven't been published). Existing non-published docs
+      // stay unreadable.
+      allow read: if resource == null || resource.data.status == 'published';
       allow write: if false;
     }
 

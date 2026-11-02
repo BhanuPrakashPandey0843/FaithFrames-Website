@@ -337,8 +337,10 @@ const EMPTY_POOL_RECHECK_MS = 30 * 1000;
 class StaleQuestionError extends Error {}
 
 let poolCache = { at: 0, entries: null, inflight: null };
+let poolGeneration = 0;
 
 export function invalidateQuizPoolCache() {
+  poolGeneration += 1;
   poolCache = { at: 0, entries: null, inflight: null };
 }
 
@@ -377,23 +379,30 @@ async function readQuestionPool(db) {
 async function loadQuestionPool(db, { force = false } = {}) {
   const fresh = poolCache.entries && Date.now() - poolCache.at < POOL_TTL_MS;
   if (fresh && !force) return poolCache.entries;
-  if (poolCache.inflight) return poolCache.inflight;
+  if (poolCache.inflight) {
+    return poolCache.entries && !force ? poolCache.entries : poolCache.inflight;
+  }
+  const stale = poolCache.entries;
+  const generation = poolGeneration;
   const inflight = readQuestionPool(db)
     .then((entries) => {
-      poolCache = { at: Date.now(), entries, inflight: null };
+      if (generation === poolGeneration) {
+        poolCache = { at: Date.now(), entries, inflight: null };
+      }
       return entries;
     })
     .catch((error) => {
-      const stale = poolCache.entries;
-      poolCache = { ...poolCache, inflight: null };
-      if (stale) {
+      if (generation === poolGeneration) {
+        poolCache = { ...poolCache, inflight: null };
+      }
+      if (stale && generation === poolGeneration) {
         console.warn("[Quiz API] Question index refresh failed; serving the previous index:", error?.message);
         return stale;
       }
       throw error;
     });
   poolCache = { ...poolCache, inflight };
-  return inflight;
+  return stale && !force ? stale : inflight;
 }
 
 const poolIdsFor = (entries, quizType) =>
@@ -562,26 +571,28 @@ async function startQuizSession(db, data, uid) {
 // Lightweight summary for Quiz Home: how many servable questions exist per
 // section, plus how many questions this user has completed. Replaces shipping
 // the whole question catalog to every device just to show two numbers.
-async function getQuizCatalog(db, uid) {
-  const entries = await loadQuestionPool(db);
-  const types = {};
-  Object.entries(QUIZ_TYPES).forEach(([id, quizType]) => {
-    types[id] = { poolSize: poolIdsFor(entries, quizType).length };
-  });
-  let attemptedCount = 0;
-  if (uid) {
-    try {
-      const aggregate = await db
+async function getQuizCatalog(db, uid, forceRefresh = false) {
+  const attemptedCountPromise = uid
+    ? db
         .collection("users")
         .doc(uid)
         .collection("attemptedQuestions")
         .count()
-        .get();
-      attemptedCount = aggregate.data().count || 0;
-    } catch (error) {
-      console.warn("[Quiz API] Could not count attempted questions:", error?.message);
-    }
-  }
+        .get()
+        .then((aggregate) => aggregate.data().count || 0)
+        .catch((error) => {
+          console.warn("[Quiz API] Could not count attempted questions:", error?.message);
+          return 0;
+        })
+    : Promise.resolve(0);
+  const [entries, attemptedCount] = await Promise.all([
+    loadQuestionPool(db, { force: forceRefresh }),
+    attemptedCountPromise,
+  ]);
+  const types = {};
+  Object.entries(QUIZ_TYPES).forEach(([id, quizType]) => {
+    types[id] = { poolSize: poolIdsFor(entries, quizType).length };
+  });
   return { totalQuestions: entries.length, attemptedCount, types };
 }
 
@@ -910,7 +921,9 @@ async function submitQuizSession(db, data, authContext) {
 }
 
 export async function runQuizAction(action, data, authContext, db = getAdminDb()) {
-  if (action === "getQuizCatalog") return getQuizCatalog(db, authContext?.uid);
+  if (action === "getQuizCatalog") {
+    return getQuizCatalog(db, authContext?.uid, data?.forceRefresh === true);
+  }
   if (action === "getQuizQuestions") return getQuizQuestions(db);
   if (action === "startQuizSession") return startQuizSession(db, data, authContext?.uid);
   if (action === "answerQuizQuestion") return answerQuizQuestion(db, data, authContext?.uid);

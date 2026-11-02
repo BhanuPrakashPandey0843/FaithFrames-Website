@@ -73,6 +73,26 @@ function formatDate(value) {
     : date.toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
 }
 
+const ACTIVE_STATUSES = ["queued", "sending"];
+
+/** One short line describing what actually happened to a campaign's push delivery. */
+function deliverySummary(campaign) {
+  const stats = campaign.stats || {};
+  const parts = [`${(stats.inboxCreated || 0).toLocaleString()} inbox entries`];
+  if (ACTIVE_STATUSES.includes(campaign.status)) {
+    const total = campaign.audienceEstimate?.total;
+    parts.push(total ? `processed ${(stats.targeted || 0).toLocaleString()} of ${total.toLocaleString()} users` : "processing…");
+  }
+  if (stats.pushDevices > 0 || stats.pushAttempted > 0) {
+    parts.push(`${(stats.pushDevices || 0).toLocaleString()} push devices`);
+    parts.push(`${(stats.pushAccepted || 0).toLocaleString()} accepted by Expo`);
+    if (stats.pushRejected > 0) parts.push(`${stats.pushRejected.toLocaleString()} failed`);
+  } else if (campaign.status === "sent" || campaign.status === "failed") {
+    parts.push("no push devices");
+  }
+  return parts.join(" · ");
+}
+
 function statusClasses(status) {
   const tone = STATUS_META[status]?.tone;
   return {
@@ -143,13 +163,14 @@ export default function NotificationsAdminPage() {
       ...(key === "category" && value === "personal" ? { audienceType: "users" } : {}),
     }));
     setFieldErrors((current) => ({ ...current, [key]: undefined }));
-    setAudiencePreview(null);
+    // Only an audience change invalidates the recipient preview (typing a title must not).
+    if (["audienceType", "segment", "onlyWithPush", "category"].includes(key)) setAudiencePreview(null);
   };
 
-  const loadCampaigns = useCallback(async ({ append = false, nextCursor = null } = {}) => {
+  const loadCampaigns = useCallback(async ({ append = false, nextCursor = null, silent = false } = {}) => {
     if (append) setLoadingMore(true);
-    else setLoading(true);
-    setPageError("");
+    else if (!silent) setLoading(true);
+    if (!silent) setPageError("");
     try {
       const params = new URLSearchParams({ limit: "25" });
       if (filters.q.trim().length >= 2) params.set("q", filters.q.trim());
@@ -157,11 +178,25 @@ export default function NotificationsAdminPage() {
       if (filters.category) params.set("category", filters.category);
       if (nextCursor) params.set("cursor", nextCursor);
       const data = await readResponse(await fetch(`/api/admin/notifications?${params}`, { cache: "no-store" }));
-      setCampaigns((current) => append ? [...current, ...data.campaigns] : data.campaigns);
-      setCursor(data.nextCursor);
-      if (!append) setStats(data.stats);
+      if (silent) {
+        // Background refresh while a campaign is being processed: update rows in place and keep
+        // whatever pages the admin has already loaded.
+        setCampaigns((current) => {
+          const fresh = new Map(data.campaigns.map((campaign) => [campaign.id, campaign]));
+          const known = new Set(current.map((campaign) => campaign.id));
+          return [
+            ...data.campaigns.filter((campaign) => !known.has(campaign.id)),
+            ...current.map((campaign) => fresh.get(campaign.id) || campaign),
+          ];
+        });
+        setStats(data.stats);
+      } else {
+        setCampaigns((current) => append ? [...current, ...data.campaigns] : data.campaigns);
+        setCursor(data.nextCursor);
+        if (!append) setStats(data.stats);
+      }
     } catch (error) {
-      setPageError(error.message);
+      if (!silent) setPageError(error.message);
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -203,6 +238,33 @@ export default function NotificationsAdminPage() {
     ...(form.audienceType === "users" ? { userIds: selectedUsers.map((user) => user.id) } : {}),
     onlyWithPush: form.onlyWithPush,
   }), [form.audienceType, form.segment, form.onlyWithPush, selectedUsers]);
+
+  // Recipient counts are shown automatically (and refreshed when the audience changes), so the admin
+  // always sees how many users and push devices a send will reach BEFORE pressing Send.
+  useEffect(() => {
+    if (selectedAudience.type === "users" && selectedAudience.userIds.length === 0) return undefined;
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      setAudienceLoading(true);
+      try {
+        const result = await readResponse(await fetch("/api/admin/notifications/audience", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ audience: selectedAudience }),
+          signal: controller.signal,
+        }));
+        setAudiencePreview(result.audience);
+      } catch (error) {
+        if (error.name !== "AbortError") setAudiencePreview(null);
+      } finally {
+        if (!controller.signal.aborted) setAudienceLoading(false);
+      }
+    }, 400);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [selectedAudience]);
 
   const reviewAudience = async () => {
     setAudienceLoading(true);
@@ -272,11 +334,19 @@ export default function NotificationsAdminPage() {
         },
         body: JSON.stringify({ ...payload, confirmedLargeAudience }),
       }));
+      const devices = result.audience?.devices;
+      const reach = `${(result.audience?.total ?? 0).toLocaleString()} users`;
       setNotice(
         result.campaign.status === "queued"
-          ? "Notification queued. Delivery is processed in batches; push acceptance is not proof of display."
+          ? `Notification queued for ${reach}. Sending starts within about a minute and runs in batches — follow the progress in Campaign history. ${
+              devices === 0
+                ? "No device is registered for push yet, so recipients will only get the in-app inbox message. "
+                : devices !== undefined
+                  ? `${devices.toLocaleString()} push devices are registered. `
+                  : ""
+            }Push acceptance is not proof of display.`
           : result.campaign.status === "scheduled"
-            ? "Notification scheduled successfully."
+            ? `Notification scheduled for ${reach}.`
             : "Draft saved."
       );
       setConfirmLarge(null);
@@ -317,18 +387,44 @@ export default function NotificationsAdminPage() {
     void submitCampaign(payload, idempotencyRef.current.key);
   };
 
-  const loadDetails = async (id) => {
-    setDetailLoading(true);
-    setDetails(null);
+  const loadDetails = useCallback(async (id, { silent = false } = {}) => {
+    if (!silent) {
+      setDetailLoading(true);
+      setDetails(null);
+    }
     try {
       const result = await readResponse(await fetch(`/api/admin/notifications/${encodeURIComponent(id)}`, { cache: "no-store" }));
-      setDetails(result);
+      // A background refresh must not re-open a dialog the admin has closed in the meantime.
+      setDetails((current) => (silent && current?.campaign?.id !== id ? current : result));
     } catch (error) {
-      setPageError(error.message);
+      if (!silent) setPageError(error.message);
     } finally {
-      setDetailLoading(false);
+      if (!silent) setDetailLoading(false);
     }
-  };
+  }, []);
+
+  // While something is still being sent, keep the history and the open detail view fresh.
+  const hasActiveCampaign = campaigns.some((campaign) => ACTIVE_STATUSES.includes(campaign.status));
+  useEffect(() => {
+    if (!hasActiveCampaign) return undefined;
+    const timer = setInterval(() => {
+      if (document.visibilityState === "visible") loadCampaigns({ silent: true });
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [hasActiveCampaign, loadCampaigns]);
+
+  const detailsCampaignId = details?.campaign?.id;
+  const detailsInFlight = Boolean(
+    details &&
+      (ACTIVE_STATUSES.includes(details.campaign.status) || details.delivery.pendingReceipt > 0)
+  );
+  useEffect(() => {
+    if (!detailsCampaignId || !detailsInFlight) return undefined;
+    const timer = setInterval(() => {
+      if (document.visibilityState === "visible") loadDetails(detailsCampaignId, { silent: true });
+    }, 8000);
+    return () => clearInterval(timer);
+  }, [detailsCampaignId, detailsInFlight, loadDetails]);
 
   const updateCampaign = async (id, action) => {
     setSending(true);
@@ -544,12 +640,33 @@ export default function NotificationsAdminPage() {
                     <FieldError>{fieldErrors.audience}</FieldError>
                   </div>
                 )}
+                {audienceLoading && !audiencePreview && (
+                  <p className="mt-3 flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-xs text-slate-500"><LoaderCircle size={13} className="animate-spin" /> Counting recipients…</p>
+                )}
                 {audiencePreview && (
-                  <p className="mt-3 rounded-lg bg-white px-3 py-2 text-xs leading-5 text-slate-600">
-                    Audience: <strong>{audiencePreview.total.toLocaleString()} users</strong>
-                    {audiencePreview.devices !== undefined && <> · {audiencePreview.devices.toLocaleString()} registered device tokens (not a delivery guarantee)</>}
-                    {audiencePreview.exact === false && " · segment size is approximate"}
-                  </p>
+                  <div className="mt-3 space-y-2">
+                    <p className="rounded-lg bg-white px-3 py-2 text-xs leading-5 text-slate-600">
+                      Audience: <strong>{audiencePreview.total.toLocaleString()} users</strong> will get this in their in-app inbox
+                      {audiencePreview.devices !== undefined && (
+                        <>
+                          {" · "}<strong>{audiencePreview.devices.toLocaleString()}</strong> active push devices
+                          {audiencePreview.devicesAndroid !== undefined && <> ({audiencePreview.devicesAndroid.toLocaleString()} Android, {audiencePreview.devicesIos.toLocaleString()} iOS)</>}
+                          {" — an upper bound, not a delivery guarantee"}
+                        </>
+                      )}
+                      {audiencePreview.exact === false && " · segment size is approximate"}
+                    </p>
+                    {audiencePreview.devices === 0 && (
+                      <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">
+                        No device has registered for push notifications for this audience, so nobody will receive a push alert — recipients will only see the message in their in-app inbox. Users register when they allow notifications in the app.
+                      </p>
+                    )}
+                    {audiencePreview.devicesAndroid === 0 && audiencePreview.devicesIos > 0 && (
+                      <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">
+                        No Android device has registered yet. Android push needs an app build that includes Firebase (google-services.json) and FCM credentials uploaded to Expo.
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -746,7 +863,7 @@ export default function NotificationsAdminPage() {
                       </div>
                       <p className="mt-1 line-clamp-1 text-xs text-slate-500">{campaign.body}</p>
                       <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-slate-400">
-                        <span>{categoryLabel(campaign.category)}</span><span>{campaign.audience?.type === "users" ? `${campaign.audience.userIds?.length || 0} selected users` : campaign.audience?.type === "segment" ? `${campaign.audience.segment} segment` : "All users"}</span><span>{formatDate(campaign.sentAt || campaign.scheduledFor || campaign.createdAt)}</span><span>{campaign.stats?.inboxCreated || 0} inbox entries</span>
+                        <span>{categoryLabel(campaign.category)}</span><span>{campaign.audience?.type === "users" ? `${campaign.audience.userIds?.length || 0} selected users` : campaign.audience?.type === "segment" ? `${campaign.audience.segment} segment` : "All users"}</span><span>{formatDate(campaign.sentAt || campaign.scheduledFor || campaign.createdAt)}</span><span>{deliverySummary(campaign)}</span>
                       </div>
                     </div>
                     <button type="button" onClick={() => loadDetails(campaign.id)} className="inline-flex items-center gap-1 self-start rounded-lg px-3 py-2 text-xs font-semibold text-orange-700 hover:bg-orange-50 sm:self-center">
@@ -814,17 +931,41 @@ export default function NotificationsAdminPage() {
                     ["Sent", formatDate(details.campaign.sentAt)],
                   ].map(([label, value]) => <div key={label} className="rounded-xl bg-slate-50 p-3"><p className="text-[11px] uppercase tracking-wide text-slate-400">{label}</p><p className="mt-1 text-sm font-medium text-slate-800">{value}</p></div>)}
                 </div>
-                <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <p className="mt-5 text-[11px] font-semibold uppercase tracking-wide text-slate-400">Delivery pipeline</p>
+                <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
                   {[
                     ["Inbox entries", details.delivery.inbox],
-                    ["Push accepted", details.delivery.accepted],
-                    ["Provider handoff", details.delivery.providerHandedOff],
+                    ["Push devices targeted", details.campaign.stats?.pushDevices ?? 0],
+                    ["Accepted by Expo", details.campaign.stats?.pushAccepted ?? 0],
+                    ["Rejected at submission", details.campaign.stats?.pushRejected ?? 0],
+                    ["Receipt pending", details.delivery.pendingReceipt],
+                    ["Handed to FCM/APNs", details.delivery.providerHandedOff],
+                    ["Failed after accept", details.campaign.stats?.pushReceiptError ?? 0],
                     ["Read / opened", `${details.delivery.read} / ${details.delivery.opened}`],
-                  ].map(([label, value]) => <div key={label} className="rounded-xl border border-slate-200 p-3"><p className="text-xl font-semibold text-slate-900">{value}</p><p className="mt-1 text-[11px] text-slate-500">{label}</p></div>)}
+                  ].map(([label, value]) => <div key={label} className="rounded-xl border border-slate-200 p-3"><p className="text-xl font-semibold text-slate-900">{typeof value === "number" ? value.toLocaleString() : value}</p><p className="mt-1 text-[11px] text-slate-500">{label}</p></div>)}
                 </div>
+                {details.campaign.status === "sent" && (details.campaign.stats?.pushDevices ?? 0) === 0 && (
+                  <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs leading-5 text-amber-800">
+                    No push-registered device was found for this audience when the campaign ran. Recipients only received the in-app inbox message.
+                  </p>
+                )}
+                {details.delivery.failureReasons?.length > 0 && (
+                  <div className="mt-4 space-y-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Why pushes failed{details.delivery.failureReasonsSampled ? " (first 500)" : ""}</p>
+                    {details.delivery.failureReasons.map((reason) => (
+                      <div key={reason.code} className="rounded-xl border border-rose-100 bg-rose-50/60 px-3 py-2.5">
+                        <p className="text-xs font-semibold text-rose-800">
+                          {reason.code} · {reason.count.toLocaleString()} device{reason.count === 1 ? "" : "s"}
+                          {(reason.android > 0 || reason.ios > 0) && <span className="font-normal text-rose-700"> ({reason.android} Android, {reason.ios} iOS)</span>}
+                        </p>
+                        {(reason.hint || reason.message) && <p className="mt-1 text-xs leading-5 text-rose-700">{reason.hint || reason.message}</p>}
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <p className="mt-4 text-xs leading-5 text-slate-500">
-                  Push accepted means Expo accepted a ticket. Provider handoff is a receipt that Expo passed it to APNs/FCM; neither proves that a device displayed it.
-                  {details.delivery.failed > 0 && ` ${details.delivery.failed} push attempts failed.`}
+                  Accepted means Expo took the message (a ticket). About 15 minutes later its receipt says whether Expo handed it to FCM/APNs; neither proves a device displayed it. Inbox reads and opens are tracked separately.
+                  {details.delivery.receiptUnknown > 0 && ` ${details.delivery.receiptUnknown} receipts were never returned by Expo.`}
                 </p>
                 <div className="mt-6 flex flex-wrap justify-end gap-2">
                   <button onClick={() => duplicateCampaign(details.campaign)} className="rounded-xl border border-slate-200 px-3.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Use as template</button>

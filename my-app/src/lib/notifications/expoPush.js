@@ -91,17 +91,33 @@ export async function sendExpoPushMessages(
   return tickets;
 }
 
-/** Returns a Map(ticketId -> receipt). Receipts missing from the response are simply absent. */
+/**
+ * Returns a Map(ticketId -> receipt). Receipts missing from the response are simply absent.
+ *
+ * A failing chunk does not discard the receipts already fetched from earlier chunks: the ids of the
+ * failed chunk are simply absent, so the caller leaves those deliveries pending and asks again later.
+ * The call only throws when every chunk failed (so the caller can log a provider/network outage).
+ */
 export async function getExpoReceipts(
   ids,
   { fetchImpl = fetch, accessToken = process.env.EXPO_ACCESS_TOKEN, timeoutMs = 15000, maxRetries = 2, sleep = defaultSleep } = {}
 ) {
   const receipts = new Map();
-  for (const group of chunk(ids, RECEIPT_CHUNK_SIZE)) {
-    const json = await postJson(EXPO_RECEIPTS_URL, { ids: group }, { fetchImpl, accessToken, timeoutMs, maxRetries, sleep });
-    const data = json?.data && typeof json.data === "object" ? json.data : {};
-    for (const [id, receipt] of Object.entries(data)) receipts.set(id, receipt);
+  const groups = chunk(ids, RECEIPT_CHUNK_SIZE);
+  let failures = 0;
+  let lastError = null;
+  for (const group of groups) {
+    try {
+      const json = await postJson(EXPO_RECEIPTS_URL, { ids: group }, { fetchImpl, accessToken, timeoutMs, maxRetries, sleep });
+      const data = json?.data && typeof json.data === "object" ? json.data : {};
+      for (const [id, receipt] of Object.entries(data)) receipts.set(id, receipt);
+    } catch (err) {
+      failures++;
+      lastError = err;
+    }
   }
+  if (groups.length > 0 && failures === groups.length) throw lastError || new Error("Expo receipt request failed");
+  receipts.failedChunks = failures;
   return receipts;
 }
 

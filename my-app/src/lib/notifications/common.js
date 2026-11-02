@@ -24,6 +24,9 @@ export function isAlreadyExists(err) {
   return err?.code === 6 || err?.code === "already-exists" || /ALREADY_EXISTS/.test(String(err?.message || ""));
 }
 
+// Re-exported so the dispatcher keeps importing its Firestore helpers from one place.
+export { commitInChunks } from "./batch.js";
+
 /** A log/DB-safe error message: no stack, no payloads, bounded length. */
 export function safeError(err) {
   return String(err?.message || err || "Unknown error")

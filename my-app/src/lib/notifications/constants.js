@@ -122,3 +122,20 @@ export const STATUS_META = {
   failed: { label: "Failed", tone: "red" },
   cancelled: { label: "Cancelled", tone: "gray" },
 };
+
+/**
+ * Plain-language explanations of the error codes Expo returns in push tickets/receipts, shown in the
+ * campaign details so an admin can tell a configuration problem from a dead device.
+ */
+export const PUSH_ERROR_HINTS = {
+  DeviceNotRegistered:
+    "The app was uninstalled or notifications were revoked on that device. The token was removed automatically.",
+  InvalidCredentials:
+    "Expo could not authenticate with FCM (Android) or APNs (iOS). Upload valid push credentials to the Expo project (run `eas credentials`) and, for Android, make sure the app build includes google-services.json.",
+  MismatchSenderId:
+    "The FCM credentials uploaded to Expo belong to a different Firebase project than the app's google-services.json.",
+  MessageTooBig: "The notification payload was larger than the 4 KB limit.",
+  MessageRateExceeded: "Expo throttled sends to this device. It can be retried.",
+  provider_error: "Expo rejected the request. Check the server logs for the provider message.",
+  receipt_error: "Expo reported a delivery error without a specific code.",
+};

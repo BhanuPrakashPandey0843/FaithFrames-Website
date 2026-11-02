@@ -3,6 +3,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb, isFirebaseAdminConfigured } from "../../../../../lib/firebaseAdmin";
 import { requireAdminSession } from "../../../../../lib/requireAdminSession";
 import { campaignsCol, serializeDoc, serializeValue } from "../../../../../lib/notifications/common";
+import { PUSH_ERROR_HINTS } from "../../../../../lib/notifications/constants";
 
 export const runtime = "nodejs";
 
@@ -23,22 +24,47 @@ export async function GET(req, { params }) {
     const ref = campaignsCol(db).doc(id);
     const snapshot = await ref.get();
     if (!snapshot.exists) return NextResponse.json({ message: "Notification campaign not found." }, { status: 404 });
-    const [accepted, failed, handedOff, inbox, read, opened, retryable] = await Promise.all([
+    const [accepted, failed, handedOff, receiptUnknown, inbox, read, opened, retryable, failedSample] = await Promise.all([
       db.collection("notificationDeliveries").where("campaignId", "==", id).where("status", "==", "accepted").count().get(),
       db.collection("notificationDeliveries").where("campaignId", "==", id).where("status", "==", "failed").count().get(),
       db.collection("notificationDeliveries").where("campaignId", "==", id).where("status", "==", "handed_off").count().get(),
+      db.collection("notificationDeliveries").where("campaignId", "==", id).where("status", "==", "receipt_unknown").count().get(),
       db.collectionGroup("notifications").where("campaignId", "==", id).count().get(),
       db.collectionGroup("notifications").where("campaignId", "==", id).where("read", "==", true).count().get(),
       db.collectionGroup("notifications").where("campaignId", "==", id).where("opened", "==", true).count().get(),
       db.collection("notificationDeliveries").where("campaignId", "==", id).where("status", "==", "failed").where("retryable", "==", true).count().get(),
+      // A bounded sample is enough to explain WHY pushes failed without reading every delivery.
+      db.collection("notificationDeliveries")
+        .where("campaignId", "==", id)
+        .where("status", "==", "failed")
+        .select("errorCode", "errorMessage", "platform")
+        .limit(500)
+        .get(),
     ]);
+    const reasons = new Map();
+    failedSample.docs.forEach((failedDoc) => {
+      const code = String(failedDoc.get("errorCode") || "provider_error");
+      const entry = reasons.get(code) || { code, count: 0, message: "", android: 0, ios: 0 };
+      entry.count++;
+      if (!entry.message) entry.message = String(failedDoc.get("errorMessage") || "").slice(0, 200);
+      const platform = failedDoc.get("platform");
+      if (platform === "android" || platform === "ios") entry[platform]++;
+      reasons.set(code, entry);
+    });
     return NextResponse.json({
       campaign: serializeDoc(snapshot),
       delivery: {
+        // Lifecycle of a push: accepted ticket -> (15+ min later) receipt -> handed to FCM/APNs.
+        pendingReceipt: accepted.data().count,
         accepted: accepted.data().count,
         providerHandedOff: handedOff.data().count,
+        receiptUnknown: receiptUnknown.data().count,
         failed: failed.data().count,
         retryable: retryable.data().count,
+        failureReasons: [...reasons.values()]
+          .sort((a, b) => b.count - a.count)
+          .map((entry) => ({ ...entry, hint: PUSH_ERROR_HINTS[entry.code] || "" })),
+        failureReasonsSampled: failedSample.size >= 500,
         inbox: inbox.data().count,
         read: read.data().count,
         opened: opened.data().count,

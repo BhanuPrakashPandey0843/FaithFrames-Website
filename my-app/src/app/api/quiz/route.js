@@ -58,6 +58,7 @@ function errorStatus(code) {
     unauthenticated: 401,
     "permission-denied": 403,
     "not-found": 404,
+    "no-questions": 404,
     "already-exists": 409,
     "failed-precondition": 412,
     internal: 500,
@@ -91,7 +92,7 @@ export async function POST(request) {
   try {
     const { action, data = {} } = body || {};
     if (
-      !["getQuizQuestions", "startQuizSession", "answerQuizQuestion", "submitQuizSession"].includes(
+      !["getQuizCatalog", "getQuizQuestions", "startQuizSession", "answerQuizQuestion", "submitQuizSession"].includes(
         action
       )
     ) {
@@ -114,7 +115,7 @@ export async function POST(request) {
     return jsonResponse(result, 200, origin);
   } catch (error) {
     if (error instanceof QuizApiError) {
-      return jsonResponse({ message: error.message }, errorStatus(error.code), origin);
+      return jsonResponse({ message: error.message, code: error.code }, errorStatus(error.code), origin);
     }
     console.error("[api/quiz POST]", error);
     return jsonResponse({ message: "Quiz request failed." }, 500, origin);

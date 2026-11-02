@@ -65,24 +65,50 @@ async function countQuery(query) {
 }
 
 /**
+ * Devices that could receive a push for this audience: ACTIVE token documents only. The split by
+ * platform is what tells an admin immediately when e.g. no Android device has ever registered.
+ * (Whether each owner has switched push on is only known per user, while the campaign is processed.)
+ */
+async function countDevices(db, audience) {
+  const tokens = db.collection(COLLECTIONS.tokens);
+  if (audience.type === "users") {
+    const ids = audience.userIds || [];
+    let total = 0;
+    for (let start = 0; start < ids.length; start += 30) {
+      total += await countQuery(
+        tokens.where("ownerUid", "in", ids.slice(start, start + 30)).where("active", "==", true)
+      );
+    }
+    return { devices: total };
+  }
+  const active = tokens.where("active", "==", true);
+  const [devices, android, ios] = await Promise.all([
+    countQuery(active),
+    countQuery(active.where("platform", "==", "android")),
+    countQuery(active.where("platform", "==", "ios")),
+  ]);
+  return { devices, devicesAndroid: android, devicesIos: ios };
+}
+
+/**
  * Cheap audience size for the composer's "review audience" step.
  * exact=false means "approximately" (segments derived from payment records).
  */
 export async function countAudience(db, audience) {
-  const devices = await countQuery(db.collection(COLLECTIONS.tokens));
+  const deviceCounts = await countDevices(db, audience);
 
   if (audience.type === "users") {
     const ids = audience.userIds || [];
     const snaps = ids.length ? await db.getAll(...ids.map((id) => db.collection("users").doc(id)), { fieldMask: ["name"] }) : [];
-    return { total: snaps.filter((s) => s.exists).length, requested: ids.length, exact: true, devices };
+    return { total: snaps.filter((s) => s.exists).length, requested: ids.length, exact: true, ...deviceCounts };
   }
 
   const totalUsers = await countQuery(db.collection("users"));
-  if (audience.type === "all") return { total: totalUsers, exact: true, devices };
+  if (audience.type === "all") return { total: totalUsers, exact: true, ...deviceCounts };
 
   if (audience.segment === "new7d") {
     const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    return { total: await countQuery(db.collection("users").where("createdAt", ">=", since)), exact: true, devices };
+    return { total: await countQuery(db.collection("users").where("createdAt", ">=", since)), exact: true, ...deviceCounts };
   }
 
   const [completedPayments, flaggedPremium] = await Promise.all([
@@ -90,7 +116,7 @@ export async function countAudience(db, audience) {
     countQuery(db.collection("users").where("isPremium", "==", true)),
   ]);
   const premiumUpperBound = Math.min(totalUsers, completedPayments + flaggedPremium);
-  if (audience.segment === "premium") return { total: premiumUpperBound, exact: false, devices };
-  if (audience.segment === "free") return { total: Math.max(0, totalUsers - premiumUpperBound), exact: false, devices };
+  if (audience.segment === "premium") return { total: premiumUpperBound, exact: false, ...deviceCounts };
+  if (audience.segment === "free") return { total: Math.max(0, totalUsers - premiumUpperBound), exact: false, ...deviceCounts };
   throw new Error(`Unknown segment "${audience.segment}"`);
 }

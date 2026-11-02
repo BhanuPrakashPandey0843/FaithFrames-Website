@@ -1,5 +1,6 @@
-import { FieldValue, Timestamp } from "firebase-admin/firestore";
-import { getAdminDb } from "./firebaseAdmin";
+import { FieldPath, FieldValue, Timestamp } from "firebase-admin/firestore";
+import { getAdminDb } from "./firebaseAdmin.js";
+import { sanitizeClientHistory, selectQuizQuestionIds } from "./quizSelection.js";
 
 const QUIZ_TYPES = {
   daily: { categories: ["bible", "jesus", "old", "new", "mixed"], questionsCount: 10 },
@@ -234,7 +235,10 @@ async function getQuizQuestions(db) {
   };
 }
 
-async function startQuizSession(db, data, uid) {
+// Registers a session for an explicit list of question ids. Used when an
+// existing session is resumed/re-verified, and by app builds published before
+// server-side selection existed (they pick locally and send `questionIds`).
+async function registerQuizSession(db, data, uid) {
   const { sessionId, quizTypeId, questionIds } = data || {};
   const quizType = QUIZ_TYPES[quizTypeId];
   const ownerId = uid || "guest";
@@ -252,9 +256,6 @@ async function startQuizSession(db, data, uid) {
 
   const sessionRef = sessionRefFor(db, uid, sessionId);
   const questionRefs = questionIds.map((id) => db.collection("questions").doc(id));
-  const attemptedRefs = uid
-    ? questionIds.map((id) => db.collection("users").doc(uid).collection("attemptedQuestions").doc(id))
-    : [];
   let startedAtMs = Date.now();
 
   await db.runTransaction(async (transaction) => {
@@ -273,7 +274,6 @@ async function startQuizSession(db, data, uid) {
     }
 
     const questionSnaps = await Promise.all(questionRefs.map((ref) => transaction.get(ref)));
-    const attemptedSnaps = await Promise.all(attemptedRefs.map((ref) => transaction.get(ref)));
     const parsed = questionSnaps.map((snap, index) =>
       snap.exists ? parseQuestion(questionIds[index], snap.data()) : null
     );
@@ -285,12 +285,13 @@ async function startQuizSession(db, data, uid) {
           question.correctIndex < 0 ||
           question.correctIndex >= question.options.length ||
           !quizType.categories.includes(question.category)
-      ) ||
-      attemptedSnaps.some((snap) => snap.exists)
+      )
     ) {
+      // Questions may legitimately repeat across cycles, so "already attempted"
+      // is no longer an error - only unpublished/deleted/invalid questions are.
       throw new QuizApiError(
         "failed-precondition",
-        "Some questions are unavailable or have already been attempted. Refresh the quiz list and try again."
+        "Some questions are no longer available. Start a new quiz."
       );
     }
 
@@ -304,6 +305,284 @@ async function startQuizSession(db, data, uid) {
     startedAtMs = Date.now();
   });
   return { startedAt: startedAtMs };
+}
+
+// ─── Server-side question selection ──────────────────────────────────────────
+//
+// The server (not the device) picks each quiz's questions so that:
+//  - every question in the database is reachable (the old catalog endpoint
+//    only ever returned the newest 500),
+//  - history is recorded when a quiz STARTS, so abandoning and restarting does
+//    not replay the same questions,
+//  - the client cannot choose favourable questions.
+//
+// A lightweight in-memory index of servable question ids is shared across
+// requests (refreshed every POOL_TTL_MS) so starting a quiz costs ~10 document
+// reads instead of re-reading the whole collection. Chosen questions are always
+// re-read fresh inside the start transaction, so edits show their latest text
+// immediately and deleted/unpublished questions are never served (a stale index
+// entry just triggers a re-pick against a freshly rebuilt index).
+
+const POOL_PAGE_SIZE = 1000;
+const POOL_MAX_PAGES = 30;
+const POOL_TTL_MS =
+  Number(process.env.QUIZ_POOL_TTL_MS) > 0 ? Number(process.env.QUIZ_POOL_TTL_MS) : 10 * 60 * 1000;
+const POOL_FIELDS = ["question", "text", "category", "active", "options", "choices", "correctIndex", "correctAnswer"];
+// If a section looks empty but the index is older than this, rebuild it once
+// before telling the user there are no questions (an admin may just have
+// published the first one). Throttled so empty sections cannot cause a full
+// re-read on every tap.
+const EMPTY_POOL_RECHECK_MS = 30 * 1000;
+
+class StaleQuestionError extends Error {}
+
+let poolCache = { at: 0, entries: null, inflight: null };
+
+export function invalidateQuizPoolCache() {
+  poolCache = { at: 0, entries: null, inflight: null };
+}
+
+const isServableQuestion = (parsed, data) =>
+  parsed.active &&
+  String(data.question || data.text || "").trim().length > 0 &&
+  parsed.options.length >= 2 &&
+  Number.isInteger(parsed.correctIndex) &&
+  parsed.correctIndex >= 0 &&
+  parsed.correctIndex < parsed.options.length;
+
+async function readQuestionPool(db) {
+  const entries = [];
+  let lastDoc = null;
+  for (let page = 0; page < POOL_MAX_PAGES; page += 1) {
+    let query = db
+      .collection("questions")
+      .orderBy(FieldPath.documentId())
+      .select(...POOL_FIELDS)
+      .limit(POOL_PAGE_SIZE);
+    if (lastDoc) query = query.startAfter(lastDoc);
+    const snapshot = await query.get();
+    snapshot.docs.forEach((document) => {
+      const data = document.data();
+      const parsed = parseQuestion(document.id, data);
+      if (isServableQuestion(parsed, data)) {
+        entries.push({ id: document.id, category: parsed.category });
+      }
+    });
+    if (snapshot.size < POOL_PAGE_SIZE) break;
+    lastDoc = snapshot.docs[snapshot.docs.length - 1];
+  }
+  return entries;
+}
+
+async function loadQuestionPool(db, { force = false } = {}) {
+  const fresh = poolCache.entries && Date.now() - poolCache.at < POOL_TTL_MS;
+  if (fresh && !force) return poolCache.entries;
+  if (poolCache.inflight) return poolCache.inflight;
+  const inflight = readQuestionPool(db)
+    .then((entries) => {
+      poolCache = { at: Date.now(), entries, inflight: null };
+      return entries;
+    })
+    .catch((error) => {
+      const stale = poolCache.entries;
+      poolCache = { ...poolCache, inflight: null };
+      if (stale) {
+        console.warn("[Quiz API] Question index refresh failed; serving the previous index:", error?.message);
+        return stale;
+      }
+      throw error;
+    });
+  poolCache = { ...poolCache, inflight };
+  return inflight;
+}
+
+const poolIdsFor = (entries, quizType) =>
+  entries.filter((entry) => quizType.categories.includes(entry.category)).map((entry) => entry.id);
+
+// The payload sent to the app: everything needed to display the question,
+// but NOT the correct answer (answers are graded server-side).
+function buildQuestionPayload(snap, quizType) {
+  if (!snap.exists) return null;
+  const data = snap.data();
+  const parsed = parseQuestion(snap.id, data);
+  if (!isServableQuestion(parsed, data) || !quizType.categories.includes(parsed.category)) return null;
+  return {
+    id: snap.id,
+    question: String(data.question || data.text || "").trim(),
+    options: parsed.options,
+    category: parsed.category,
+    difficulty: parsed.difficulty,
+    reference: String(data.reference || "").trim(),
+    explanation: String(data.explanation || "").trim(),
+  };
+}
+
+async function startSelectedQuizSession(db, data, uid) {
+  const { sessionId, quizTypeId } = data || {};
+  const quizType = QUIZ_TYPES[quizTypeId];
+  const ownerId = uid || "guest";
+  if (!quizType || !validateSessionId(sessionId, ownerId, quizTypeId)) {
+    throw new QuizApiError("invalid-argument", "Invalid quiz session.");
+  }
+
+  // Guests have no server-side history; the device keeps it and sends it back.
+  const guestHistory = uid ? null : sanitizeClientHistory(data.clientHistory);
+  const sessionRef = sessionRefFor(db, uid, sessionId);
+  const historyRef = uid ? db.collection("users").doc(uid).collection("quizHistory").doc(quizTypeId) : null;
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const entries = await loadQuestionPool(db, { force: attempt > 0 });
+    let poolIds = poolIdsFor(entries, quizType);
+    if (!poolIds.length && attempt === 0 && Date.now() - poolCache.at > EMPTY_POOL_RECHECK_MS) {
+      poolIds = poolIdsFor(await loadQuestionPool(db, { force: true }), quizType);
+    }
+    if (!poolIds.length) {
+      throw new QuizApiError("no-questions", "No questions are published for this quiz yet.");
+    }
+
+    try {
+      return await db.runTransaction(async (transaction) => {
+        const sessionSnap = await transaction.get(sessionRef);
+        const historySnap = historyRef ? await transaction.get(historyRef) : null;
+
+        // Idempotent retry: the app re-sent a start that already succeeded
+        // (e.g. the response was lost on a flaky network). Return the same set.
+        if (sessionSnap.exists) {
+          const saved = sessionSnap.data();
+          if (
+            saved.status !== "active" ||
+            saved.quizTypeId !== quizTypeId ||
+            !Array.isArray(saved.questionIds) ||
+            saved.questionIds.length < 1
+          ) {
+            throw new QuizApiError("already-exists", "This quiz session has already been used.");
+          }
+          const savedSnaps = await transaction.getAll(
+            ...saved.questionIds.map((id) => db.collection("questions").doc(id))
+          );
+          const savedQuestions = savedSnaps.map((snap) => buildQuestionPayload(snap, quizType));
+          if (savedQuestions.some((question) => !question)) {
+            throw new QuizApiError(
+              "failed-precondition",
+              "Some questions in this quiz are no longer available. Start a new quiz."
+            );
+          }
+          return {
+            startedAt: saved.startedAt instanceof Timestamp ? saved.startedAt.toMillis() : Date.now(),
+            questions: savedQuestions,
+            history: saved.history || null,
+          };
+        }
+
+        let history;
+        if (guestHistory) {
+          history = guestHistory;
+        } else if (historySnap.exists) {
+          const saved = historySnap.data();
+          history = {
+            cycle: Number.isInteger(saved.cycle) && saved.cycle >= 1 ? saved.cycle : 1,
+            seenIds: Array.isArray(saved.seenIds) ? saved.seenIds : [],
+            lastSessionIds: Array.isArray(saved.lastSessionIds) ? saved.lastSessionIds : [],
+          };
+        } else {
+          // First time this user plays this section: seed from the questions
+          // they completed before per-section history existed.
+          const attempted = await transaction.get(
+            db.collection("users").doc(uid).collection("attemptedQuestions")
+          );
+          history = { cycle: 1, seenIds: attempted.docs.map((document) => document.id), lastSessionIds: [] };
+        }
+
+        const selection = selectQuizQuestionIds({
+          poolIds,
+          seenIds: history.seenIds,
+          lastSessionIds: history.lastSessionIds,
+          cycle: history.cycle,
+          count: quizType.questionsCount,
+        });
+
+        const snaps = await transaction.getAll(
+          ...selection.ids.map((id) => db.collection("questions").doc(id))
+        );
+        const questions = snaps.map((snap) => buildQuestionPayload(snap, quizType));
+        if (questions.some((question) => !question)) throw new StaleQuestionError();
+
+        const summary = {
+          cycle: selection.cycle,
+          poolSize: selection.poolSize,
+          seenCount: selection.seenIds.length,
+          startedNewCycle: selection.startedNewCycle,
+        };
+        transaction.create(sessionRef, {
+          sessionId,
+          quizTypeId,
+          questionIds: selection.ids,
+          status: "active",
+          startedAt: FieldValue.serverTimestamp(),
+          cycle: selection.cycle,
+          history: summary,
+        });
+        if (historyRef) {
+          transaction.set(historyRef, {
+            quizTypeId,
+            cycle: selection.cycle,
+            seenIds: selection.seenIds,
+            lastSessionIds: selection.lastSessionIds,
+            updatedAt: FieldValue.serverTimestamp(),
+          });
+        }
+
+        return {
+          startedAt: Date.now(),
+          questions,
+          history: guestHistory
+            ? { ...summary, seenIds: selection.seenIds, lastSessionIds: selection.lastSessionIds }
+            : summary,
+        };
+      });
+    } catch (error) {
+      if (error instanceof StaleQuestionError) {
+        // The cached index still listed a question that was just deleted or
+        // unpublished. Rebuild it and pick again.
+        invalidateQuizPoolCache();
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw new QuizApiError("failed-precondition", "Quiz questions changed while starting. Please try again.");
+}
+
+async function startQuizSession(db, data, uid) {
+  return Array.isArray(data?.questionIds)
+    ? registerQuizSession(db, data, uid)
+    : startSelectedQuizSession(db, data, uid);
+}
+
+// Lightweight summary for Quiz Home: how many servable questions exist per
+// section, plus how many questions this user has completed. Replaces shipping
+// the whole question catalog to every device just to show two numbers.
+async function getQuizCatalog(db, uid) {
+  const entries = await loadQuestionPool(db);
+  const types = {};
+  Object.entries(QUIZ_TYPES).forEach(([id, quizType]) => {
+    types[id] = { poolSize: poolIdsFor(entries, quizType).length };
+  });
+  let attemptedCount = 0;
+  if (uid) {
+    try {
+      const aggregate = await db
+        .collection("users")
+        .doc(uid)
+        .collection("attemptedQuestions")
+        .count()
+        .get();
+      attemptedCount = aggregate.data().count || 0;
+    } catch (error) {
+      console.warn("[Quiz API] Could not count attempted questions:", error?.message);
+    }
+  }
+  return { totalQuestions: entries.length, attemptedCount, types };
 }
 
 async function answerQuizQuestion(db, data, uid) {
@@ -446,15 +725,11 @@ async function submitQuizSession(db, data, authContext) {
         .doc(uid)
     );
     const userRef = db.collection("users").doc(uid);
-    const [questionSnaps, attemptedSnaps, userSnap, leaderboardSnaps] = await Promise.all([
+    const [questionSnaps, userSnap, leaderboardSnaps] = await Promise.all([
       Promise.all(questionRefs.map((ref) => transaction.get(ref))),
-      Promise.all(attemptedRefs.map((ref) => transaction.get(ref))),
       transaction.get(userRef),
       Promise.all(leaderboardRefs.map((ref) => transaction.get(ref))),
     ]);
-    if (attemptedSnaps.some((snap) => snap.exists)) {
-      throw new QuizApiError("already-exists", "These questions have already been submitted.");
-    }
 
     const questions = questionSnaps.map((snap, index) => {
       if (!snap.exists) throw new QuizApiError("failed-precondition", "A quiz question is no longer available.");
@@ -550,13 +825,21 @@ async function submitQuizSession(db, data, authContext) {
       { name: displayName, photoURL, updatedAt: FieldValue.serverTimestamp() },
       { merge: true }
     );
+    // Completed-question log (shown as "attempted" on Quiz Home). Questions can
+    // legitimately be answered again in a later cycle, so this is an upsert, not
+    // a create-once guard; double submission is prevented by the session's
+    // `completed` status above.
     attemptedRefs.forEach((ref, index) => {
-      transaction.create(ref, {
-        questionId: questionIds[index],
-        quizTypeId,
-        correct: answers.find((answer) => answer.questionId === questionIds[index])?.correct === true,
-        attemptedAt: FieldValue.serverTimestamp(),
-      });
+      transaction.set(
+        ref,
+        {
+          questionId: questionIds[index],
+          quizTypeId,
+          correct: answers.find((answer) => answer.questionId === questionIds[index])?.correct === true,
+          attemptedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
     });
 
     leaderboardSnaps.forEach((snap, index) => {
@@ -626,8 +909,8 @@ async function submitQuizSession(db, data, authContext) {
   return response;
 }
 
-export async function runQuizAction(action, data, authContext) {
-  const db = getAdminDb();
+export async function runQuizAction(action, data, authContext, db = getAdminDb()) {
+  if (action === "getQuizCatalog") return getQuizCatalog(db, authContext?.uid);
   if (action === "getQuizQuestions") return getQuizQuestions(db);
   if (action === "startQuizSession") return startQuizSession(db, data, authContext?.uid);
   if (action === "answerQuizQuestion") return answerQuizQuestion(db, data, authContext?.uid);

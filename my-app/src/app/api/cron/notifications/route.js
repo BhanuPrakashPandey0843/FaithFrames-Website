@@ -13,8 +13,8 @@ function isAuthorized(req, secret) {
   return actual.length === expected.length && timingSafeEqual(actual, expected);
 }
 
-export async function POST(req) {
-  const secret = process.env.NOTIFICATION_CRON_SECRET;
+async function handleCron(req) {
+  const secret = process.env.CRON_SECRET || process.env.NOTIFICATION_CRON_SECRET;
   if (!secret || !isAuthorized(req, secret)) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
@@ -29,4 +29,12 @@ export async function POST(req) {
     console.error("[api/cron/notifications POST]", String(error?.message || error).slice(0, 200));
     return NextResponse.json({ message: "Notification processing failed." }, { status: 500 });
   }
+}
+
+export async function GET(req) {
+  return handleCron(req);
+}
+
+export async function POST(req) {
+  return handleCron(req);
 }

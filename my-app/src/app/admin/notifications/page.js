@@ -336,18 +336,40 @@ export default function NotificationsAdminPage() {
       }));
       const devices = result.audience?.devices;
       const reach = `${(result.audience?.total ?? 0).toLocaleString()} users`;
+      let campaign = result.campaign;
+      let processingError = "";
+      while (campaign.status === "queued") {
+        try {
+          const dispatch = await readResponse(await fetch(`/api/admin/notifications/${encodeURIComponent(campaign.id)}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "process" }),
+          }));
+          campaign = dispatch.campaign;
+          processingError = dispatch.processingError || "";
+          if (processingError) break;
+        } catch (error) {
+          processingError = error.message;
+          break;
+        }
+      }
+      const pushNote = devices === 0
+        ? "No device is registered for push; recipients can still receive in-app notifications."
+        : devices !== undefined
+          ? `${devices.toLocaleString()} push devices are registered.`
+          : "";
       setNotice(
-        result.campaign.status === "queued"
-          ? `Notification queued for ${reach}. Sending starts within about a minute and runs in batches — follow the progress in Campaign history. ${
-              devices === 0
-                ? "No device is registered for push yet, so recipients will only get the in-app inbox message. "
-                : devices !== undefined
-                  ? `${devices.toLocaleString()} push devices are registered. `
+        campaign.status === "sent"
+          ? `Campaign processed for ${(campaign.stats?.targeted || 0).toLocaleString()} users; ${(campaign.stats?.inboxCreated || 0).toLocaleString()} in-app notifications created. Push acceptance does not guarantee display.`
+          : campaign.status === "queued" || campaign.status === "sending"
+            ? `Notification is ${campaign.status} for ${reach}. Processed ${(campaign.stats?.targeted || 0).toLocaleString()} users so far; remaining recipients continue in the background. ${
+                processingError
+                  ? `Initial processing reported: ${processingError}. Check the notification worker configuration and campaign details. `
                   : ""
-            }Push acceptance is not proof of display.`
-          : result.campaign.status === "scheduled"
-            ? `Notification scheduled for ${reach}.`
-            : "Draft saved."
+              }${pushNote}`
+            : campaign.status === "scheduled"
+              ? `Notification scheduled for ${reach}.`
+              : "Draft saved."
       );
       setConfirmLarge(null);
       setForm(initialForm());
@@ -921,6 +943,11 @@ export default function NotificationsAdminPage() {
             ) : (
               <>
                 <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-600">{details.campaign.body}</p>
+                {details.campaign.lastError && (
+                  <p className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs leading-5 text-rose-800">
+                    Last processing error: {details.campaign.lastError}
+                  </p>
+                )}
                 <div className="mt-5 grid gap-3 sm:grid-cols-2">
                   {[
                     ["Campaign status", STATUS_META[details.campaign.status]?.label || details.campaign.status],

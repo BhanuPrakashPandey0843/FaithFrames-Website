@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb, isFirebaseAdminConfigured } from "../../../../../lib/firebaseAdmin";
 import { requireAdminSession } from "../../../../../lib/requireAdminSession";
-import { campaignsCol, serializeDoc, serializeValue } from "../../../../../lib/notifications/common";
+import { campaignsCol, safeError, serializeDoc, serializeValue } from "../../../../../lib/notifications/common";
+import { processCampaign } from "../../../../../lib/notifications/dispatcher";
 import { PUSH_ERROR_HINTS } from "../../../../../lib/notifications/constants";
 
 export const runtime = "nodejs";
@@ -93,13 +94,35 @@ export async function PATCH(req, { params }) {
   } catch {
     return NextResponse.json({ message: "Request body must be valid JSON." }, { status: 400 });
   }
-  if (!["cancel", "retry"].includes(body?.action)) {
+  if (!["cancel", "retry", "process"].includes(body?.action)) {
     return NextResponse.json({ message: "Choose a supported campaign action." }, { status: 400 });
   }
 
   try {
     const db = getAdminDb();
     const ref = campaignsCol(db).doc(id);
+    if (body.action === "process") {
+      let processingError = "";
+      try {
+        await processCampaign(db, id);
+      } catch (error) {
+        processingError = safeError(error);
+        console.error("[api/admin/notifications/[id] process]", {
+          campaignId: id,
+          error: processingError,
+        });
+      }
+      const updated = await ref.get();
+      if (!updated.exists) {
+        return NextResponse.json({ message: "Notification campaign not found." }, { status: 404 });
+      }
+      return NextResponse.json({
+        success: true,
+        campaign: serializeValue({ id, ...updated.data() }),
+        ...(processingError ? { processingError } : {}),
+      });
+    }
+
     const retryableCount = body.action === "retry"
       ? await db.collection("notificationDeliveries")
         .where("campaignId", "==", id)
